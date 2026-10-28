@@ -33,6 +33,7 @@ PluginComponent {
     readonly property bool hideEmpty: boolSetting("hideEmpty", false)
     readonly property bool showAllMonitors: boolSetting("showAllMonitors", true)
     readonly property bool excludeReservedZones: boolSetting("excludeReservedZones", true)
+    readonly property bool squareHighlight: boolSetting("squareHighlight", false)
     readonly property bool live: surfaceLive !== false
 
     readonly property var visibleWorkspaces: hideEmpty
@@ -78,6 +79,7 @@ PluginComponent {
                     iconSize: root.iconSize
                     maxIcons: root.maxIcons
                     excludeReserved: root.excludeReservedZones
+                    squareHighlight: root.squareHighlight
                     vertical: false
                     onActivated: backend.focusWorkspace(modelData.id)
                 }
@@ -115,6 +117,7 @@ PluginComponent {
                     iconSize: root.iconSize
                     maxIcons: root.maxIcons
                     excludeReserved: root.excludeReservedZones
+                    squareHighlight: root.squareHighlight
                     vertical: true
                     onActivated: backend.focusWorkspace(modelData.id)
                 }

@@ -73,4 +73,11 @@ PluginSettings {
         description: I18n.tr("Hide bars, docks and other edge panels from thumbnails so only the usable workspace area is shown.")
         defaultValue: true
     }
+
+    ToggleSetting {
+        settingKey: "squareHighlight"
+        label: I18n.tr("Square highlight")
+        description: I18n.tr("Draw the focus and visible-workspace outline as a sharp rectangle instead of rounded corners.")
+        defaultValue: false
+    }
 }

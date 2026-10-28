@@ -43,6 +43,7 @@ Dock placement is not supported yet. The widget is built for bars only.
 | Hide empty workspaces | Off | Hide workspaces with no windows, unless focused or visible. |
 | Show workspaces from all monitors | On | When off, only workspaces on this bar's monitor are shown. |
 | Exclude reserved zones | On | Hide bars, docks and other edge panels from thumbnails, so only the usable workspace area is shown. |
+| Square highlight | Off | Draw the focus and visible-workspace outline as a sharp rectangle instead of rounded corners. |
 
 ## Architecture
 

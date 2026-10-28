@@ -15,6 +15,7 @@ Item {
     property int maxIcons: 4
     property bool vertical: false
     property bool excludeReserved: true
+    property bool squareHighlight: false
 
     signal activated()
 
@@ -99,7 +100,7 @@ Item {
 
         Rectangle {
             anchors.fill: parent
-            radius: parent.radius
+            radius: root.squareHighlight ? 0 : parent.radius
             color: "transparent"
             border.width: root.ws.focused ? 2 : (root.ws.onVisibleSpace ? 1 : 0)
             border.color: root.ws.focused ? Theme.primary : Theme.outline
