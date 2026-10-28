@@ -58,6 +58,25 @@ Item {
     implicitWidth: thumbW + leadX + (iconsColumn && iconMode === "after" && showIcons ? iconSize + gap : 0)
     implicitHeight: thumbH + leadY + trailY + anchoredOverhang
 
+    readonly property bool activeOnOutput: ws.onVisibleSpace && ws.screen !== null
+
+    // Hyprland slides the output during a workspace switch. Per-window captures
+    // are unaffected by that slide, so use them until the animation has finished.
+    property bool outputSettled: false
+    onActiveOnOutputChanged: {
+        outputSettled = false;
+        settleTimer.restart();
+    }
+    Component.onCompleted: settleTimer.restart()
+
+    Timer {
+        id: settleTimer
+        interval: 2000
+        onTriggered: root.outputSettled = true
+    }
+
+    readonly property bool useOutputCapture: activeOnOutput && outputSettled
+
     Rectangle {
         id: frame
         x: root.leadX
@@ -79,13 +98,13 @@ Item {
                 y: -root.insets.top * root.scaleFactor
                 width: root.ws.outputW * root.scaleFactor
                 height: root.ws.outputH * root.scaleFactor
-                visible: root.ws.onVisibleSpace && root.ws.screen !== null
+                visible: root.useOutputCapture
                 captureSource: root.ws.screen
                 live: root.live
             }
 
             Repeater {
-                model: root.ws.onVisibleSpace ? [] : root.ws.windows
+                model: root.useOutputCapture ? [] : root.ws.windows
 
                 delegate: ScreencopyView {
                     required property var modelData
@@ -100,7 +119,7 @@ Item {
 
             Text {
                 anchors.centerIn: parent
-                visible: root.ws.windows.length === 0 && !(root.ws.onVisibleSpace && root.ws.screen !== null)
+                visible: root.ws.windows.length === 0 && !root.useOutputCapture
                 text: root.ws.name
                 color: Theme.surfaceText
                 font.pixelSize: Math.max(8, root.thumbH * 0.4)
