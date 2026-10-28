@@ -50,9 +50,31 @@ PluginComponent {
     readonly property bool showDecorations: boolSetting("showDecorations", true)
     readonly property bool live: surfaceLive !== false
 
-    readonly property var visibleWorkspaces: hideEmpty
+    readonly property bool trailingPlaceholder: boolSetting("trailingPlaceholder", false)
+
+    readonly property var realWorkspaces: hideEmpty
         ? backend.workspaces.filter(ws => ws.windows.length > 0 || ws.focused || ws.onVisibleSpace)
         : backend.workspaces
+
+    // Offers a new workspace after the last one, but only when that last one is in use.
+    // It copies the last workspace's output geometry so it sizes like its neighbours.
+    readonly property var visibleWorkspaces: {
+        const list = realWorkspaces;
+        if (!trailingPlaceholder || list.length === 0)
+            return list;
+        const last = list[list.length - 1];
+        if (last.windows.length === 0)
+            return list;
+        const placeholder = Object.assign({}, last, {
+            id: last.id + 1,
+            name: String(last.id + 1),
+            windows: [],
+            focused: false,
+            onVisibleSpace: false,
+            placeholder: true
+        });
+        return list.concat([placeholder]);
+    }
 
     // Wheel: up = previous workspace, down = next. Accumulates one notch (120 units) per step.
     property real wheelAccumulator: 0

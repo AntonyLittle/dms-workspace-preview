@@ -170,8 +170,8 @@ Item {
             Text {
                 anchors.centerIn: parent
                 visible: root.ws.windows.length === 0
-                text: root.ws.name
-                color: Theme.surfaceText
+                text: root.ws.placeholder ? "+" : root.ws.name
+                color: root.ws.placeholder ? Theme.outline : Theme.surfaceText
                 font.pixelSize: Math.max(8, root.thumbH * 0.4)
             }
         }

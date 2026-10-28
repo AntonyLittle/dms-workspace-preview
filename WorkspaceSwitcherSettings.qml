@@ -95,6 +95,13 @@ PluginSettings {
     }
 
     ToggleSetting {
+        settingKey: "trailingPlaceholder"
+        label: I18n.tr("Add placeholder after last workspace")
+        description: I18n.tr("Show a \"+\" thumbnail after the last workspace that adds a new one. Only shown when the last workspace has windows.")
+        defaultValue: false
+    }
+
+    ToggleSetting {
         settingKey: "squareHighlight"
         label: I18n.tr("Square highlight")
         description: I18n.tr("Draw the focus and visible-workspace outline as a sharp rectangle instead of rounded corners.")
