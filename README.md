@@ -4,7 +4,7 @@ A DankMaterialShell (DMS) bar widget that shows your workspaces as live thumbnai
 
 ## Features
 
-- Live thumbnails of every workspace. The active workspace on each monitor is captured as the whole output. Inactive workspaces are composed from their individual windows.
+- Live thumbnails of every workspace, composed from each window's own capture. Compositor animations such as workspace slides and three-finger swipes don't appear in the thumbnails. The wallpaper and layer surfaces aren't shown.
 - Left-click a thumbnail to switch to that workspace.
 - Mouse wheel over the widget steps through workspaces (wheel up = previous, wheel down = next).
 - Optional app icons per workspace, in four modes:
@@ -60,4 +60,4 @@ Compositor-specific code is isolated behind a single contract:
 ## Limitations
 
 - Hyprland only.
-- Thumbnails rely on Wayland screencopy. Each thumbnail shows only the usable area of its output when "Exclude reserved zones" is on, so bars and docks are cropped out.
+- Thumbnails rely on Wayland screencopy, captured per window. With "Exclude reserved zones" on, windows are offset so bars and docks are cropped out. Empty workspaces show their name.

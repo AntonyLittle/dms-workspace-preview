@@ -58,25 +58,6 @@ Item {
     implicitWidth: thumbW + leadX + (iconsColumn && iconMode === "after" && showIcons ? iconSize + gap : 0)
     implicitHeight: thumbH + leadY + trailY + anchoredOverhang
 
-    readonly property bool activeOnOutput: ws.onVisibleSpace && ws.screen !== null
-
-    // Hyprland slides the output during a workspace switch. Per-window captures
-    // are unaffected by that slide, so use them until the animation has finished.
-    property bool outputSettled: false
-    onActiveOnOutputChanged: {
-        outputSettled = false;
-        settleTimer.restart();
-    }
-    Component.onCompleted: settleTimer.restart()
-
-    Timer {
-        id: settleTimer
-        interval: 2000
-        onTriggered: root.outputSettled = true
-    }
-
-    readonly property bool useOutputCapture: activeOnOutput && outputSettled
-
     Rectangle {
         id: frame
         x: root.leadX
@@ -91,20 +72,10 @@ Item {
             id: content
             anchors.fill: parent
 
-            // Captures the whole output; offset and oversize it so the usable area
-            // fills the frame and the reserved edges fall outside the clip.
-            ScreencopyView {
-                x: -root.insets.left * root.scaleFactor
-                y: -root.insets.top * root.scaleFactor
-                width: root.ws.outputW * root.scaleFactor
-                height: root.ws.outputH * root.scaleFactor
-                visible: root.useOutputCapture
-                captureSource: root.ws.screen
-                live: root.live
-            }
-
+            // Each window is captured on its own, so compositor animations such as
+            // workspace slides and swipe gestures never appear in the thumbnail.
             Repeater {
-                model: root.useOutputCapture ? [] : root.ws.windows
+                model: root.ws.windows
 
                 delegate: ScreencopyView {
                     required property var modelData
@@ -119,7 +90,7 @@ Item {
 
             Text {
                 anchors.centerIn: parent
-                visible: root.ws.windows.length === 0 && !root.useOutputCapture
+                visible: root.ws.windows.length === 0
                 text: root.ws.name
                 color: Theme.surfaceText
                 font.pixelSize: Math.max(8, root.thumbH * 0.4)
