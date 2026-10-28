@@ -73,10 +73,17 @@ Item {
             id: content
             anchors.fill: parent
 
+            // Keyed by window address so each capture survives focus and move updates.
+            ScriptModel {
+                id: windowModel
+                values: root.ws.windows
+                objectProp: "address"
+            }
+
             // Each window is captured on its own, so compositor animations such as
             // workspace slides and swipe gestures never appear in the thumbnail.
             Repeater {
-                model: root.ws.windows
+                model: windowModel
 
                 delegate: ScreencopyView {
                     required property var modelData

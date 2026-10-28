@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import qs.Common
 import qs.Modules.Plugins
 
@@ -8,6 +9,13 @@ PluginComponent {
     WorkspaceBackend {
         id: backend
         outputFilter: root.showAllMonitors || !root.parentScreen ? "" : root.parentScreen.name
+    }
+
+    // Keyed by workspace id so delegates persist and only update when the list changes.
+    ScriptModel {
+        id: workspaceModel
+        values: root.visibleWorkspaces
+        objectProp: "id"
     }
 
     function setting(key, fallback) {
@@ -68,7 +76,7 @@ PluginComponent {
             }
 
             Repeater {
-                model: root.visibleWorkspaces
+                model: workspaceModel
 
                 delegate: WorkspaceItem {
                     required property var modelData
@@ -106,7 +114,7 @@ PluginComponent {
             }
 
             Repeater {
-                model: root.visibleWorkspaces
+                model: workspaceModel
 
                 delegate: WorkspaceItem {
                     required property var modelData

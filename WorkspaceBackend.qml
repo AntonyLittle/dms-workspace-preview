@@ -14,7 +14,8 @@ import qs.Services
 //                     claimed by exclusive layer surfaces (bars, docks)
 //       focused       bool     workspace is the globally focused one
 //       onVisibleSpace bool    workspace is the active one on its output
-//       windows       list of { wayland, appId, x, y, w, h, floating }
+//       windows       list of { address, wayland, appId, x, y, w, h, floating }
+//                     address is a stable compositor id for the window
 //                     x/y are relative to the output origin, logical px
 //   function focusWorkspace(id)   switch to workspace id
 //   function focusedIndex()       index of the focused workspace in workspaces, or -1

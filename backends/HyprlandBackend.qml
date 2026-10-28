@@ -52,6 +52,7 @@ QtObject {
                 if (!ipc)
                     continue;
                 windows.push({
+                    address: ipc.address ?? "",
                     wayland: tl.wayland,
                     appId: ipc.class ?? "",
                     x: ipc.at[0] - (out ? out.x : 0),
