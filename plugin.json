@@ -1,0 +1,14 @@
+{
+    "id": "workspacePreview",
+    "name": "Workspace Preview",
+    "description": "Workspace switcher bar widget with live workspace thumbnails and optional app icons",
+    "version": "0.1.0",
+    "author": "AntonyLittle",
+    "requires_dms": ">=2.0.0",
+    "icon": "view_carousel",
+    "type": "widget",
+    "capabilities": ["dankbar-widget"],
+    "component": "./WorkspaceSwitcherWidget.qml",
+    "settings": "./WorkspaceSwitcherSettings.qml",
+    "permissions": ["settings_read", "settings_write"]
+}
