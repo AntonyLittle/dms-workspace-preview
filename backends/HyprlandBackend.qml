@@ -1,11 +1,90 @@
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Hyprland
 import qs.Services
 
 // Hyprland implementation of the WorkspaceBackend contract.
-QtObject {
+Item {
     id: root
+    visible: false
+
+    property real borderSize: 0
+    property real roundingPx: 0
+    property string activeBorderColor: ""
+    property string inactiveBorderColor: ""
+
+    readonly property var decorations: ({
+        borderWidth: borderSize,
+        rounding: roundingPx,
+        activeColor: activeBorderColor,
+        inactiveColor: inactiveBorderColor
+    })
+
+    function parseOption(text) {
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    // Hyprland reports colours as AARRGGBB, optionally followed by an angle for gradients.
+    function colorFromOption(o) {
+        const raw = String(o?.gradient ?? o?.color ?? "").trim().split(" ")[0];
+        if (!/^[0-9a-fA-F]{6,8}$/.test(raw))
+            return "";
+        return "#" + (raw.length === 6 ? "ff" + raw : raw);
+    }
+
+    function refreshDecorations() {
+        borderProc.running = true;
+        roundingProc.running = true;
+        activeBorderProc.running = true;
+        inactiveBorderProc.running = true;
+    }
+
+    Component.onCompleted: refreshDecorations()
+
+    Connections {
+        target: Hyprland
+        function onRawEvent(event) {
+            if (event.name === "configreloaded")
+                root.refreshDecorations();
+        }
+    }
+
+    Process {
+        id: borderProc
+        command: ["hyprctl", "-j", "getoption", "general:border_size"]
+        stdout: StdioCollector {
+            onStreamFinished: root.borderSize = Number(root.parseOption(text)?.int ?? 0)
+        }
+    }
+
+    Process {
+        id: roundingProc
+        command: ["hyprctl", "-j", "getoption", "decoration:rounding"]
+        stdout: StdioCollector {
+            onStreamFinished: root.roundingPx = Number(root.parseOption(text)?.int ?? 0)
+        }
+    }
+
+    Process {
+        id: activeBorderProc
+        command: ["hyprctl", "-j", "getoption", "general:col.active_border"]
+        stdout: StdioCollector {
+            onStreamFinished: root.activeBorderColor = root.colorFromOption(root.parseOption(text))
+        }
+    }
+
+    Process {
+        id: inactiveBorderProc
+        command: ["hyprctl", "-j", "getoption", "general:col.inactive_border"]
+        stdout: StdioCollector {
+            onStreamFinished: root.inactiveBorderColor = root.colorFromOption(root.parseOption(text))
+        }
+    }
 
     function logicalOutput(mon) {
         const ipc = mon?.lastIpcObject;
@@ -35,6 +114,7 @@ QtObject {
         const toplevels = Hyprland.toplevels.values;
         const screens = Quickshell.screens;
         const focusedId = Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : -1;
+        const activeAddress = Hyprland.activeToplevel ? Hyprland.activeToplevel.address : "";
 
         const result = [];
         for (const ws of Hyprland.workspaces.values) {
@@ -59,7 +139,8 @@ QtObject {
                     y: ipc.at[1] - (out ? out.y : 0),
                     w: ipc.size[0],
                     h: ipc.size[1],
-                    floating: !!ipc.floating
+                    floating: !!ipc.floating,
+                    active: !!activeAddress && activeAddress === (ipc.address ?? "")
                 });
             }
             // Tiled windows first so floating ones draw on top.

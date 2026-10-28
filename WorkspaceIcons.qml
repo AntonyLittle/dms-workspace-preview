@@ -14,9 +14,18 @@ Item {
     property bool rowLayout: true
     property real spacing: 1
 
+    signal activated()
+
     readonly property int cellCount: appIds.length + (overflow > 0 ? 1 : 0)
     implicitWidth: rowLayout ? cellCount * (iconSize + spacing) - spacing : iconSize
     implicitHeight: rowLayout ? iconSize : cellCount * (iconSize + spacing) - spacing
+
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.LeftButton
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.activated()
+    }
 
     Grid {
         anchors.centerIn: parent

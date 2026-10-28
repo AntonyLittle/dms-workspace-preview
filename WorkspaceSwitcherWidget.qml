@@ -34,6 +34,10 @@ PluginComponent {
     }
 
     readonly property int thumbnailHeight: intSetting("thumbnailHeight", 24, 12, 64)
+    readonly property bool fitContainer: setting("sizeMode", "fit") !== "fixed"
+    readonly property int fillPercent: intSetting("fillPercent", 100, 50, 100)
+    readonly property real contentThickness: Math.max(0, widgetThickness - 2 * (barConfig?.widgetPadding ?? 8) * (widgetThickness / 30))
+    readonly property real fitContainerSize: contentThickness * fillPercent / 100
     readonly property string iconMode: setting("iconMode", "anchored")
     readonly property int iconSize: intSetting("iconSize", 14, 8, 32)
     readonly property int maxIcons: intSetting("maxIcons", 4, 1, 10)
@@ -42,6 +46,8 @@ PluginComponent {
     readonly property bool showAllMonitors: boolSetting("showAllMonitors", true)
     readonly property bool excludeReservedZones: boolSetting("excludeReservedZones", true)
     readonly property bool squareHighlight: boolSetting("squareHighlight", false)
+    readonly property bool showWallpaper: boolSetting("showWallpaper", true)
+    readonly property bool showDecorations: boolSetting("showDecorations", true)
     readonly property bool live: surfaceLive !== false
 
     readonly property var visibleWorkspaces: hideEmpty
@@ -65,15 +71,13 @@ PluginComponent {
     }
 
     horizontalBarPill: Component {
-        Row {
-            spacing: Theme.spacingXS
+        Item {
+            implicitWidth: strip.implicitWidth
+            implicitHeight: strip.implicitHeight
 
-            WheelHandler {
-                onWheel: event => {
-                    root.handleWheel(event.angleDelta.y);
-                    event.accepted = true;
-                }
-            }
+            Row {
+                id: strip
+                spacing: Theme.spacingXS
 
             Repeater {
                 model: workspaceModel
@@ -82,12 +86,17 @@ PluginComponent {
                     required property var modelData
                     ws: modelData
                     thumbHeight: root.thumbnailHeight
+                    fitContainer: root.fitContainer
+                    containerSize: root.fitContainerSize
                     live: root.live
                     iconMode: root.iconMode
                     iconSize: root.iconSize
                     maxIcons: root.maxIcons
                     excludeReserved: root.excludeReservedZones
                     squareHighlight: root.squareHighlight
+                    showWallpaper: root.showWallpaper
+                    showDecorations: root.showDecorations
+                    decorations: backend.decorations
                     vertical: false
                     onActivated: backend.focusWorkspace(modelData.id)
                 }
@@ -99,19 +108,30 @@ PluginComponent {
                 color: Theme.surfaceText
                 font.pixelSize: Theme.fontSizeSmall
             }
-        }
-    }
+            }
 
-    verticalBarPill: Component {
-        Column {
-            spacing: Theme.spacingXS
-
-            WheelHandler {
+            MouseArea {
+                z: -1
+                anchors.fill: parent
+                acceptedButtons: Qt.NoButton
+                hoverEnabled: true
+                cursorShape: Qt.ArrowCursor
                 onWheel: event => {
                     root.handleWheel(event.angleDelta.y);
                     event.accepted = true;
                 }
             }
+        }
+    }
+
+    verticalBarPill: Component {
+        Item {
+            implicitWidth: strip.implicitWidth
+            implicitHeight: strip.implicitHeight
+
+            Column {
+                id: strip
+                spacing: Theme.spacingXS
 
             Repeater {
                 model: workspaceModel
@@ -120,14 +140,32 @@ PluginComponent {
                     required property var modelData
                     ws: modelData
                     thumbHeight: root.thumbnailHeight
+                    fitContainer: root.fitContainer
+                    containerSize: root.fitContainerSize
                     live: root.live
                     iconMode: root.iconMode
                     iconSize: root.iconSize
                     maxIcons: root.maxIcons
                     excludeReserved: root.excludeReservedZones
                     squareHighlight: root.squareHighlight
+                    showWallpaper: root.showWallpaper
+                    showDecorations: root.showDecorations
+                    decorations: backend.decorations
                     vertical: true
                     onActivated: backend.focusWorkspace(modelData.id)
+                }
+            }
+            }
+
+            MouseArea {
+                z: -1
+                anchors.fill: parent
+                acceptedButtons: Qt.NoButton
+                hoverEnabled: true
+                cursorShape: Qt.ArrowCursor
+                onWheel: event => {
+                    root.handleWheel(event.angleDelta.y);
+                    event.accepted = true;
                 }
             }
         }

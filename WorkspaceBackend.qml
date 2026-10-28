@@ -14,9 +14,15 @@ import qs.Services
 //                     claimed by exclusive layer surfaces (bars, docks)
 //       focused       bool     workspace is the globally focused one
 //       onVisibleSpace bool    workspace is the active one on its output
-//       windows       list of { address, wayland, appId, x, y, w, h, floating }
+//       windows       list of { address, wayland, appId, x, y, w, h, floating, active }
 //                     address is a stable compositor id for the window
 //                     x/y are relative to the output origin, logical px
+//                     active is true for the globally focused window
+//   readonly property var decorations  window decoration settings, logical px:
+//       borderWidth   number   border thickness (0 when borders are off)
+//       rounding      number   corner radius
+//       activeColor   string   "#AARRGGBB" border colour for the active window
+//       inactiveColor string   "#AARRGGBB" border colour for other windows
 //   function focusWorkspace(id)   switch to workspace id
 //   function focusedIndex()       index of the focused workspace in workspaces, or -1
 Item {
@@ -28,6 +34,8 @@ Item {
     readonly property var workspaces: outputFilter === "" ? allWorkspaces
         : allWorkspaces.filter(ws => ws.outputName === outputFilter)
     readonly property bool available: loader.item !== null
+    readonly property var decorations: loader.item ? loader.item.decorations
+        : ({ borderWidth: 0, rounding: 0, activeColor: "", inactiveColor: "" })
 
     function focusWorkspace(id) {
         if (loader.item)

@@ -9,6 +9,8 @@ Item {
 
     required property var ws
     property int thumbHeight: 24
+    property bool fitContainer: false
+    property real containerSize: 0
     property bool live: true
     property string iconMode: "anchored"
     property int iconSize: 14
@@ -16,6 +18,9 @@ Item {
     property bool vertical: false
     property bool excludeReserved: true
     property bool squareHighlight: false
+    property bool showWallpaper: true
+    property bool showDecorations: true
+    property var decorations: ({ borderWidth: 0, rounding: 0, activeColor: "", inactiveColor: "" })
 
     signal activated()
 
@@ -27,10 +32,33 @@ Item {
     readonly property real usableH: Math.max(1, ws.outputH - insets.top - insets.bottom)
 
     readonly property real aspect: (ws.outputW > 0 && ws.outputH > 0) ? usableW / usableH : 16 / 9
-    readonly property int thumbW: Math.max(1, Math.round(thumbHeight * aspect))
-    readonly property int thumbH: thumbHeight
+
+    // Fit mode: containerSize is the cross-axis space the pill offers. Horizontal bars constrain
+    // height, so anchored icons (which overhang the top/bottom edge) reserve half their size.
+    // Vertical bars constrain width, and anchored icons overhang only vertically, so no reserve.
+    readonly property real fitOverhang: (!vertical && iconMode === "anchored" && showIcons) ? iconSize / 2 : 0
+    readonly property int thumbH: fitContainer
+        ? Math.max(1, Math.floor(vertical
+            ? containerSize / aspect
+            : containerSize - fitOverhang))
+        : thumbHeight
+    readonly property int thumbW: Math.max(1, Math.round(thumbH * aspect))
     readonly property real scaleFactor: ws.outputW > 0 ? thumbW / usableW : 1
     readonly property int gap: 2
+
+    // Wallpaper comes from DMS (per output). A "#rrggbb" value means a solid colour.
+    readonly property string wallpaperPath: ws.outputName ? (SessionData.getMonitorWallpaper(ws.outputName) ?? "") : ""
+    readonly property bool wallpaperIsColor: wallpaperPath.startsWith("#")
+    readonly property bool hasWallpaper: showWallpaper && wallpaperPath !== ""
+    readonly property string wallpaperFillMode: ws.outputName ? SessionData.getMonitorWallpaperFillMode(ws.outputName) : "Fill"
+    readonly property bool wallpaperTiled: wallpaperFillMode.startsWith("Tile")
+    readonly property string wallpaperUrl: wallpaperIsColor ? "" : "file://" + wallpaperPath.split("/").map(s => encodeURIComponent(s)).join("/")
+
+    // Hyprland draws borders outside each window's box. The thumbnail is too small for
+    // sub-pixel borders to show, so the border is at least one device pixel.
+    readonly property real borderPx: (showDecorations && decorations.borderWidth > 0)
+        ? Math.max(1, decorations.borderWidth * scaleFactor) : 0
+    readonly property real roundingPx: showDecorations ? decorations.rounding * scaleFactor : 0
 
     readonly property var appIds: {
         const seen = [];
@@ -73,6 +101,33 @@ Item {
             id: content
             anchors.fill: parent
 
+            // Wallpaper sits under the windows and is offset by the same insets, so it lines
+            // up with the captured area. The frame clips anything outside it.
+            Item {
+                id: wallpaper
+                visible: root.hasWallpaper
+                x: -root.insets.left * root.scaleFactor
+                y: -root.insets.top * root.scaleFactor
+                width: root.ws.outputW * root.scaleFactor
+                height: root.ws.outputH * root.scaleFactor
+
+                Rectangle {
+                    anchors.fill: parent
+                    visible: root.hasWallpaper && root.wallpaperIsColor
+                    color: root.wallpaperPath
+                }
+
+                Image {
+                    anchors.fill: parent
+                    visible: root.hasWallpaper && !root.wallpaperIsColor
+                    source: root.wallpaperUrl
+                    fillMode: Theme.getFillMode(root.wallpaperFillMode)
+                    asynchronous: true
+                    smooth: true
+                    sourceSize: root.wallpaperTiled ? Qt.size(0, 0) : Qt.size(wallpaper.width * 2, wallpaper.height * 2)
+                }
+            }
+
             // Keyed by window address so each capture survives focus and move updates.
             ScriptModel {
                 id: windowModel
@@ -85,14 +140,30 @@ Item {
             Repeater {
                 model: windowModel
 
-                delegate: ScreencopyView {
+                delegate: Item {
+                    id: windowTile
                     required property var modelData
-                    x: (modelData.x - root.insets.left) * root.scaleFactor
-                    y: (modelData.y - root.insets.top) * root.scaleFactor
-                    width: modelData.w * root.scaleFactor
-                    height: modelData.h * root.scaleFactor
-                    captureSource: modelData.wayland
-                    live: root.live
+                    x: (windowTile.modelData.x - root.insets.left) * root.scaleFactor
+                    y: (windowTile.modelData.y - root.insets.top) * root.scaleFactor
+                    width: windowTile.modelData.w * root.scaleFactor
+                    height: windowTile.modelData.h * root.scaleFactor
+
+                    // Approximates the compositor border, which is drawn outside the window box.
+                    Rectangle {
+                        visible: root.borderPx > 0
+                        x: -root.borderPx
+                        y: -root.borderPx
+                        width: parent.width + 2 * root.borderPx
+                        height: parent.height + 2 * root.borderPx
+                        radius: root.roundingPx + root.borderPx
+                        color: (windowTile.modelData.active ? root.decorations.activeColor : root.decorations.inactiveColor) || "transparent"
+                    }
+
+                    ScreencopyView {
+                        anchors.fill: parent
+                        captureSource: windowTile.modelData.wayland
+                        live: root.live
+                    }
                 }
             }
 
@@ -128,6 +199,7 @@ Item {
         overflow: root.overflowCount
         iconSize: root.iconSize
         rowLayout: root.iconsRow
+        onActivated: root.activated()
         x: {
             if (root.iconsRow)
                 return root.leadX + (root.thumbW - width) / 2;

@@ -6,10 +6,30 @@ PluginSettings {
     id: root
     pluginId: "workspacePreview"
 
+    SelectionSetting {
+        settingKey: "sizeMode"
+        label: I18n.tr("Thumbnail sizing")
+        description: I18n.tr("Fit container sizes thumbnails from the bar or dock they are in. Fixed height uses the height below.")
+        defaultValue: "fit"
+        options: [
+            { label: I18n.tr("Fit container"), value: "fit" },
+            { label: I18n.tr("Fixed height"), value: "fixed" }
+        ]
+    }
+
+    SliderSetting {
+        settingKey: "fillPercent"
+        label: I18n.tr("Fill container")
+        description: I18n.tr("In Fit container mode, the share of the bar or dock's thickness that thumbnails fill.")
+        defaultValue: 100
+        minimum: 50
+        maximum: 100
+    }
+
     SliderSetting {
         settingKey: "thumbnailHeight"
         label: I18n.tr("Thumbnail height")
-        description: I18n.tr("Height of each workspace thumbnail in pixels.")
+        description: I18n.tr("Height of each workspace thumbnail in pixels. Used in Fixed height mode.")
         defaultValue: 24
         minimum: 12
         maximum: 64
@@ -79,5 +99,19 @@ PluginSettings {
         label: I18n.tr("Square highlight")
         description: I18n.tr("Draw the focus and visible-workspace outline as a sharp rectangle instead of rounded corners.")
         defaultValue: false
+    }
+
+    ToggleSetting {
+        settingKey: "showWallpaper"
+        label: I18n.tr("Show wallpaper")
+        description: I18n.tr("Draw each monitor's DMS wallpaper behind the windows in its thumbnail.")
+        defaultValue: true
+    }
+
+    ToggleSetting {
+        settingKey: "showDecorations"
+        label: I18n.tr("Show window borders")
+        description: I18n.tr("Draw an approximation of Hyprland's window borders around each window in its thumbnail.")
+        defaultValue: true
     }
 }
