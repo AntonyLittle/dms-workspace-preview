@@ -15,12 +15,19 @@ QtObject {
         const odd = (ipc.transform % 2) === 1;
         const pw = odd ? ipc.height : ipc.width;
         const ph = odd ? ipc.width : ipc.height;
+        const r = ipc.reserved ?? [0, 0, 0, 0];
         return {
             name: mon.name,
             x: ipc.x,
             y: ipc.y,
             w: pw / scale,
-            h: ph / scale
+            h: ph / scale,
+            reserved: {
+                left: r[0] ?? 0,
+                top: r[1] ?? 0,
+                right: r[2] ?? 0,
+                bottom: r[3] ?? 0
+            }
         };
     }
 
@@ -74,6 +81,7 @@ QtObject {
                 outputY: out ? out.y : 0,
                 outputW: out ? out.w : 16,
                 outputH: out ? out.h : 9,
+                reserved: out ? out.reserved : { left: 0, top: 0, right: 0, bottom: 0 },
                 focused: ws.id === focusedId,
                 onVisibleSpace: ws.id === activeId,
                 windows: windows

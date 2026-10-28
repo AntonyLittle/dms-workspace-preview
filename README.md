@@ -42,12 +42,13 @@ Dock placement is not supported yet. The widget is built for bars only.
 | Wrap scrolling | On | Scrolling past the last workspace wraps to the first, and vice versa. |
 | Hide empty workspaces | Off | Hide workspaces with no windows, unless focused or visible. |
 | Show workspaces from all monitors | On | When off, only workspaces on this bar's monitor are shown. |
+| Exclude reserved zones | On | Hide bars, docks and other edge panels from thumbnails, so only the usable workspace area is shown. |
 
 ## Architecture
 
 Compositor-specific code is isolated behind a single contract:
 
-- `WorkspaceBackend.qml` selects a backend for the running compositor and exposes a common interface: `workspaces`, `focusWorkspace(id)`, and `scroll(step, wrap)`.
+- `WorkspaceBackend.qml` selects a backend for the running compositor and exposes a common interface: `workspaces` (each with `reserved` edge insets), `focusWorkspace(id)`, and `scroll(step, wrap)`.
 - `backends/HyprlandBackend.qml` implements that contract for Hyprland.
 - `WorkspaceItem.qml`, `WorkspaceIcons.qml`, and `WorkspaceSwitcherWidget.qml` only use the common contract, so they work unchanged with any backend.
 
@@ -59,4 +60,4 @@ Compositor-specific code is isolated behind a single contract:
 ## Limitations
 
 - Hyprland only.
-- Thumbnails rely on Wayland screencopy. Visible workspaces are captured as the whole output, so the bar itself can appear inside its own thumbnail.
+- Thumbnails rely on Wayland screencopy. Each thumbnail shows only the usable area of its output when "Exclude reserved zones" is on, so bars and docks are cropped out.

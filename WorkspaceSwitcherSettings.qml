@@ -66,4 +66,11 @@ PluginSettings {
         description: I18n.tr("When off, only workspaces on the monitor this bar is on are shown.")
         defaultValue: true
     }
+
+    ToggleSetting {
+        settingKey: "excludeReservedZones"
+        label: I18n.tr("Exclude reserved zones")
+        description: I18n.tr("Hide bars, docks and other edge panels from thumbnails so only the usable workspace area is shown.")
+        defaultValue: true
+    }
 }

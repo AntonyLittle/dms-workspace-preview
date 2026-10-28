@@ -10,6 +10,8 @@ import qs.Services
 //       outputName    string   output (monitor) name the workspace lives on
 //       screen        object   Quickshell screen for outputName (may be null)
 //       outputX/outputY/outputW/outputH  output geometry in logical px
+//       reserved      object { left, top, right, bottom } edge insets in logical px
+//                     claimed by exclusive layer surfaces (bars, docks)
 //       focused       bool     workspace is the globally focused one
 //       onVisibleSpace bool    workspace is the active one on its output
 //       windows       list of { wayland, appId, x, y, w, h, floating }

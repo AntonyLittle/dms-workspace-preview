@@ -14,13 +14,21 @@ Item {
     property int iconSize: 14
     property int maxIcons: 4
     property bool vertical: false
+    property bool excludeReserved: true
 
     signal activated()
 
-    readonly property real aspect: (ws.outputW > 0 && ws.outputH > 0) ? ws.outputW / ws.outputH : 16 / 9
+    // Insets (logical px) hiding bars/docks that reserve screen edges.
+    readonly property var insets: (excludeReserved && ws.reserved)
+        ? ws.reserved
+        : { left: 0, top: 0, right: 0, bottom: 0 }
+    readonly property real usableW: Math.max(1, ws.outputW - insets.left - insets.right)
+    readonly property real usableH: Math.max(1, ws.outputH - insets.top - insets.bottom)
+
+    readonly property real aspect: (ws.outputW > 0 && ws.outputH > 0) ? usableW / usableH : 16 / 9
     readonly property int thumbW: Math.max(1, Math.round(thumbHeight * aspect))
     readonly property int thumbH: thumbHeight
-    readonly property real scaleFactor: ws.outputW > 0 ? thumbW / ws.outputW : 1
+    readonly property real scaleFactor: ws.outputW > 0 ? thumbW / usableW : 1
     readonly property int gap: 2
 
     readonly property var appIds: {
@@ -64,8 +72,13 @@ Item {
             id: content
             anchors.fill: parent
 
+            // Captures the whole output; offset and oversize it so the usable area
+            // fills the frame and the reserved edges fall outside the clip.
             ScreencopyView {
-                anchors.fill: parent
+                x: -root.insets.left * root.scaleFactor
+                y: -root.insets.top * root.scaleFactor
+                width: root.ws.outputW * root.scaleFactor
+                height: root.ws.outputH * root.scaleFactor
                 visible: root.ws.onVisibleSpace && root.ws.screen !== null
                 captureSource: root.ws.screen
                 live: root.live
@@ -76,8 +89,8 @@ Item {
 
                 delegate: ScreencopyView {
                     required property var modelData
-                    x: modelData.x * root.scaleFactor
-                    y: modelData.y * root.scaleFactor
+                    x: (modelData.x - root.insets.left) * root.scaleFactor
+                    y: (modelData.y - root.insets.top) * root.scaleFactor
                     width: modelData.w * root.scaleFactor
                     height: modelData.h * root.scaleFactor
                     captureSource: modelData.wayland
