@@ -1,9 +1,9 @@
 {
     "id": "workspacePreview",
     "name": "Workspace Preview",
-    "description": "Workspace switcher bar widget with live workspace thumbnails and optional app icons",
-    "version": "0.1.0",
-    "author": "AntonyLittle",
+    "description": "Workspace switcher bar widget with live workspace thumbnails",
+    "version": "0.5.0",
+    "author": "Antony Little",
     "requires_dms": ">=2.0.0",
     "icon": "view_carousel",
     "type": "widget",
