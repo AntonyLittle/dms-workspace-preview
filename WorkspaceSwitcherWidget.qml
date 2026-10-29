@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Wayland
 import qs.Common
 import qs.Modules.Plugins
 
@@ -42,6 +43,10 @@ PluginComponent {
     readonly property string iconMode: setting("iconMode", "bottom") === "anchored" ? "bottom" : setting("iconMode", "bottom")
     readonly property int iconSize: intSetting("iconSize", 14, 8, 32)
     readonly property int maxIcons: intSetting("maxIcons", 4, 1, 10)
+    readonly property string hoverMode: ["none", "popout", "magnify"].includes(setting("hoverMode", "none"))
+        ? setting("hoverMode", "none") : "none"
+    readonly property int hoverSize: intSetting("hoverSize", 120, 48, 400)
+    readonly property int hoverDelay: intSetting("hoverDelay", 120, 0, 500)
     readonly property bool wrapScroll: boolSetting("wrapScroll", true)
     readonly property bool hideEmpty: boolSetting("hideEmpty", false)
     readonly property bool showAllMonitors: boolSetting("showAllMonitors", true)
@@ -69,9 +74,152 @@ PluginComponent {
     readonly property color specialColor: resolveColor("special", "custom", "tertiary", "#ffd700")
     readonly property color focusColor: resolveColor("focus", "theme", "primary", "")
     readonly property bool live: surfaceLive !== false
+    property var hoveredWorkspace: null
+    property var hoverCandidate: null
+    property point hoveredGlobalPosition: Qt.point(0, 0)
+    property int hoveredBaseThumbHeight: thumbnailHeight
+    property bool hoverPendingRemoval: false
 
     readonly property bool trailingPlaceholder: boolSetting("trailingPlaceholder", false)
     readonly property bool showSpecialWorkspaces: boolSetting("showSpecialWorkspaces", false)
+
+    function updateWorkspaceHover(ws, entered, globalPosition, baseThumbHeight) {
+        if (hoverMode === "none")
+            return;
+
+        if (entered) {
+            hoverCandidate = ws;
+            hoveredGlobalPosition = globalPosition;
+            hoveredBaseThumbHeight = baseThumbHeight;
+            hoverPendingRemoval = false;
+        } else if (hoverCandidate === ws || hoveredWorkspace === ws) {
+            if (hoverCandidate === ws)
+                hoverCandidate = null;
+            hoverPendingRemoval = true;
+        }
+        hoverTimer.restart();
+    }
+
+    function clearHover() {
+        hoverTimer.stop();
+        hoverCandidate = null;
+        hoveredWorkspace = null;
+        hoverPendingRemoval = false;
+    }
+
+    onHoverModeChanged: {
+        if (hoverMode === "none")
+            clearHover();
+    }
+
+    Timer {
+        id: hoverTimer
+        interval: root.hoverDelay
+        onTriggered: {
+            if (root.hoverCandidate) {
+                root.hoveredWorkspace = root.hoverCandidate;
+                root.hoverCandidate = null;
+                root.hoverPendingRemoval = false;
+            } else if (root.hoverPendingRemoval) {
+                root.hoveredWorkspace = null;
+                root.hoverPendingRemoval = false;
+            }
+        }
+    }
+
+    // DMS creates both pills and hides the unused one, so the popout lives here to stay single.
+    Loader {
+        active: root.hoverMode === "popout" && root.hoveredWorkspace !== null && root.parentScreen !== null
+        sourceComponent: hoverPreviewWindow
+    }
+
+    Component {
+        id: hoverPreviewWindow
+
+        PanelWindow {
+            id: popout
+
+            readonly property bool vertical: root.isVertical
+
+            readonly property real gap: 8
+            readonly property real padding: 6
+            readonly property real localX: screen ? root.hoveredGlobalPosition.x - screen.x : 0
+            readonly property real localY: screen ? root.hoveredGlobalPosition.y - screen.y : 0
+            readonly property bool popupBelow: screen ? localY < screen.height - localY : true
+            readonly property bool popupRight: screen ? localX < screen.width - localX : true
+
+            function clamp(value, maximum) {
+                return Math.max(0, Math.min(value, Math.max(0, maximum)));
+            }
+
+            screen: root.parentScreen
+            visible: root.hoverMode === "popout" && root.hoveredWorkspace !== null
+            color: "transparent"
+            exclusionMode: ExclusionMode.Ignore
+
+            WlrLayershell.namespace: "dms:plugins:workspacePreview:hover-" + (screen ? screen.name : "unknown") + (vertical ? "-vertical" : "-horizontal")
+            WlrLayershell.layer: WlrLayer.Overlay
+            WlrLayershell.exclusiveZone: -1
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+
+            anchors {
+                top: true
+                bottom: true
+                left: true
+                right: true
+            }
+
+            mask: Region {}
+
+            Item {
+                id: popup
+                width: preview.implicitWidth + popout.padding * 2
+                height: preview.implicitHeight + popout.padding * 2
+                readonly property real desiredX: popout.vertical
+                    ? (popout.popupRight
+                        ? popout.localX + root.hoveredBaseThumbHeight / 2 + popout.gap
+                        : popout.localX - width - root.hoveredBaseThumbHeight / 2 - popout.gap)
+                    : popout.localX - width / 2
+                readonly property real desiredY: popout.vertical
+                    ? popout.localY - height / 2
+                    : (popout.popupBelow
+                        ? popout.localY + root.hoveredBaseThumbHeight / 2 + popout.gap
+                        : popout.localY - height - root.hoveredBaseThumbHeight / 2 - popout.gap)
+                x: screen ? popout.clamp(desiredX, screen.width - width) : 0
+                y: screen ? popout.clamp(desiredY, screen.height - height) : 0
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: Theme.cornerRadius + popout.padding
+                    color: Theme.surfaceContainer
+                    border.width: 1
+                    border.color: Theme.outline
+                }
+
+                WorkspaceItem {
+                    id: preview
+                    x: popout.padding
+                    y: popout.padding
+                    ws: root.hoveredWorkspace
+                    thumbHeight: root.hoverSize
+                    fitContainer: false
+                    capturesEnabled: popout.visible
+                    live: true
+                    iconMode: "off"
+                    excludeReserved: root.excludeReservedZones
+                    showWallpaper: root.showWallpaper
+                    showDecorations: root.showDecorations
+                    decorations: backend.decorations
+                    flashUrgent: root.flashUrgent
+                    urgentColor: root.urgentColor
+                    specialColor: root.specialColor
+                    focusColor: root.focusColor
+                    urgentPulse: root.urgentPulse
+                    onActivated: {}
+                }
+            }
+        }
+    }
 
     readonly property var realWorkspaces: {
         const regular = backend.workspaces.filter(ws => !ws.special);
@@ -136,113 +284,22 @@ PluginComponent {
     }
 
     horizontalBarPill: Component {
-        Item {
-            implicitWidth: strip.implicitWidth
-            implicitHeight: strip.implicitHeight
-
-            Row {
-                id: strip
-                spacing: Theme.spacingXS
-
-            Repeater {
-                model: workspaceModel
-
-                delegate: WorkspaceItem {
-                    required property var modelData
-                    ws: modelData
-                    thumbHeight: root.thumbnailHeight
-                    fitContainer: root.fitContainer
-                    containerSize: root.fitContainerSize
-                    live: root.live
-                    iconMode: root.iconMode
-                    iconSize: root.iconSize
-                    maxIcons: root.maxIcons
-                    excludeReserved: root.excludeReservedZones
-                    squareHighlight: root.squareHighlight
-                    showWallpaper: root.showWallpaper
-                    showDecorations: root.showDecorations
-                    decorations: backend.decorations
-                    flashUrgent: root.flashUrgent
-                    urgentColor: root.urgentColor
-                    specialColor: root.specialColor
-                    focusColor: root.focusColor
-                    urgentPulse: root.urgentPulse
-                    vertical: false
-                    onActivated: backend.focusWorkspace(modelData.key)
-                }
-            }
-
-            Text {
-                visible: !backend.available
-                text: I18n.tr("Unsupported compositor")
-                color: Theme.surfaceText
-                font.pixelSize: Theme.fontSizeSmall
-            }
-            }
-
-            MouseArea {
-                z: -1
-                anchors.fill: parent
-                acceptedButtons: Qt.NoButton
-                hoverEnabled: true
-                cursorShape: Qt.ArrowCursor
-                onWheel: event => {
-                    root.handleWheel(event.angleDelta.y);
-                    event.accepted = true;
-                }
-            }
+        WorkspaceStrip {
+            widget: root
+            workspaceBackend: backend
+            model: workspaceModel
+            vertical: false
+            anchorEdge: root.axis ? root.axis.edge : "top"
         }
     }
 
     verticalBarPill: Component {
-        Item {
-            implicitWidth: strip.implicitWidth
-            implicitHeight: strip.implicitHeight
-
-            Column {
-                id: strip
-                spacing: Theme.spacingXS
-
-            Repeater {
-                model: workspaceModel
-
-                delegate: WorkspaceItem {
-                    required property var modelData
-                    ws: modelData
-                    thumbHeight: root.thumbnailHeight
-                    fitContainer: root.fitContainer
-                    containerSize: root.fitContainerSize
-                    live: root.live
-                    iconMode: root.iconMode
-                    iconSize: root.iconSize
-                    maxIcons: root.maxIcons
-                    excludeReserved: root.excludeReservedZones
-                    squareHighlight: root.squareHighlight
-                    showWallpaper: root.showWallpaper
-                    showDecorations: root.showDecorations
-                    decorations: backend.decorations
-                    flashUrgent: root.flashUrgent
-                    urgentColor: root.urgentColor
-                    specialColor: root.specialColor
-                    focusColor: root.focusColor
-                    urgentPulse: root.urgentPulse
-                    vertical: true
-                    onActivated: backend.focusWorkspace(modelData.key)
-                }
-            }
-            }
-
-            MouseArea {
-                z: -1
-                anchors.fill: parent
-                acceptedButtons: Qt.NoButton
-                hoverEnabled: true
-                cursorShape: Qt.ArrowCursor
-                onWheel: event => {
-                    root.handleWheel(event.angleDelta.y);
-                    event.accepted = true;
-                }
-            }
+        WorkspaceStrip {
+            widget: root
+            workspaceBackend: backend
+            model: workspaceModel
+            vertical: true
+            anchorEdge: root.axis ? root.axis.edge : "left"
         }
     }
 }

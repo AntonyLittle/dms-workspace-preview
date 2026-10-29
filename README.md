@@ -9,6 +9,7 @@ A DankMaterialShell (DMS) bar widget that shows your workspaces as live thumbnai
 - Left-click a thumbnail to switch to that workspace.
 - Workspaces with a window that needs attention (urgent) pulse a coloured border until you switch to them.
 - Mouse wheel over the widget steps through workspaces (wheel up = previous, wheel down = next). Special workspaces are skipped.
+- Optional hover behaviour: do nothing, show a larger popout preview, or magnify nearby thumbnails in a dock-style layout.
 - Optional special (scratchpad) workspaces, shown after the regular ones. Clicking one toggles it: shown when hidden, hidden when shown. Shown specials get a coloured border.
 - Optional app icons per workspace, in four modes:
   - **Off**
@@ -29,6 +30,9 @@ A DankMaterialShell (DMS) bar widget that shows your workspaces as live thumbnai
 | Thumbnail sizing | Fit container | `Fit container` sizes thumbnails to fill the widget's content area inside its bar or dock pill (height on horizontal bars and docks, width on vertical bars). `Fixed height` uses the Thumbnail height setting. |
 | Fill container | 100 | In Fit container mode, the percentage (50–100) of the bar or dock's thickness that thumbnails fill. |
 | Thumbnail height | 24 | Height of each thumbnail in pixels (12–64). Used in Fixed height mode. |
+| Hover behaviour | None | None, a larger popout preview, or dock-style magnification of thumbnails around the pointer. |
+| Hover thumbnail size | 120 | Height in pixels of the popout preview or largest magnified thumbnail (48–400). |
+| Hover delay | 120 | Delay in milliseconds before the popout preview appears or changes (0–500). Magnification follows the pointer immediately. |
 | App icons | Overlap bottom edge | Off, overlap top, bottom, left or right edge, before thumbnail, or after thumbnail. |
 | Icon size | 14 | Icon size in pixels (8–32). |
 | Maximum icons per workspace | 4 | Extra apps collapse into a `+N` badge (1–10). |
@@ -74,3 +78,4 @@ Compositor-specific code is isolated behind a single contract:
 - Thumbnails rely on Wayland screencopy, captured per window. With "Exclude reserved zones" on, windows and the wallpaper are offset so bars and docks are cropped out. Empty workspaces show their name.
 - Window borders are approximations. Each border is drawn at least one device pixel wide, and drawn corners are square at thumbnail size. Shadows and blur are not drawn. Border colours and sizes are read when the widget loads and when Hyprland reloads its config.
 - The wallpaper is taken from DMS. If another tool changes the wallpaper, the thumbnail follows DMS's setting, not the actual background. "Scrolling" fill mode is drawn as "Fill".
+- Dock magnification scales thumbnails without changing the widget size, so magnified thumbnails can extend past the bar thickness and over neighbouring bar widgets.

@@ -11,6 +11,8 @@ Item {
     property int thumbHeight: 24
     property bool fitContainer: false
     property real containerSize: 0
+    property bool hoverEnabled: false
+    property bool capturesEnabled: true
     property bool live: true
     property string iconMode: "bottom"
     property int iconSize: 14
@@ -28,6 +30,7 @@ Item {
     property real urgentPulse: 1
 
     signal activated()
+    signal hoverChanged(bool hovered, point globalPosition, int baseThumbHeight)
 
     // Insets (logical px) hiding bars/docks that reserve screen edges.
     readonly property var insets: (excludeReserved && ws.reserved)
@@ -195,7 +198,7 @@ Item {
                     // A stopped capture is recreated after a short pause, rather than left empty.
                     Loader {
                         anchors.fill: parent
-                        active: windowTile.captureActive
+                        active: windowTile.captureActive && root.capturesEnabled
                         sourceComponent: ScreencopyView {
                             captureSource: windowTile.modelData.wayland
                             live: root.live
@@ -249,8 +252,11 @@ Item {
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton
+            hoverEnabled: root.hoverEnabled
             cursorShape: Qt.PointingHandCursor
             onClicked: root.activated()
+            onEntered: root.hoverChanged(true, frame.mapToGlobal(frame.width / 2, frame.height / 2), root.thumbH)
+            onExited: root.hoverChanged(false, Qt.point(0, 0), root.thumbH)
         }
     }
 

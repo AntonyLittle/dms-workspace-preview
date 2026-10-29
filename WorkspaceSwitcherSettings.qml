@@ -44,6 +44,36 @@ PluginSettings {
     }
 
     SelectionSetting {
+        settingKey: "hoverMode"
+        label: I18n.tr("Hover behaviour")
+        description: I18n.tr("Choose what happens when the pointer rests over a workspace thumbnail.")
+        defaultValue: "none"
+        options: [
+            { label: I18n.tr("None"), value: "none" },
+            { label: I18n.tr("Popout preview"), value: "popout" },
+            { label: I18n.tr("Dock magnification"), value: "magnify" }
+        ]
+    }
+
+    SliderSetting {
+        settingKey: "hoverSize"
+        label: I18n.tr("Hover thumbnail size")
+        description: I18n.tr("Height in pixels of the enlarged preview or the largest magnified thumbnail.")
+        defaultValue: 120
+        minimum: 48
+        maximum: 400
+    }
+
+    SliderSetting {
+        settingKey: "hoverDelay"
+        label: I18n.tr("Hover delay")
+        description: I18n.tr("Time before the popout preview appears or switches to another workspace.")
+        defaultValue: 120
+        minimum: 0
+        maximum: 500
+    }
+
+    SelectionSetting {
         settingKey: "iconMode"
         label: I18n.tr("App icons")
         description: I18n.tr("Where app icons appear relative to each thumbnail.")
