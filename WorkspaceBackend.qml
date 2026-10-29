@@ -47,29 +47,6 @@ Item {
             loader.item.focusWorkspace(key);
     }
 
-    // Special workspaces are excluded so wheel scrolling only cycles regular workspaces.
-    function scroll(step, wrap) {
-        const list = workspaces.filter(ws => !ws.special);
-        if (list.length === 0)
-            return;
-        let current = -1;
-        for (let i = 0; i < list.length; i++) {
-            if (list[i].focused) {
-                current = i;
-                break;
-            }
-        }
-        if (current < 0)
-            current = 0;
-        let target = current + step;
-        if (wrap)
-            target = ((target % list.length) + list.length) % list.length;
-        else
-            target = Math.max(0, Math.min(list.length - 1, target));
-        if (target !== current)
-            focusWorkspace(list[target].key);
-    }
-
     Loader {
         id: loader
         source: CompositorService.isHyprland ? "backends/HyprlandBackend.qml" : ""

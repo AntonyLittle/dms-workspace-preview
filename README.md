@@ -36,11 +36,11 @@ A DankMaterialShell (DMS) bar widget that shows your workspaces as live thumbnai
 | App icons | Overlap bottom edge | Off, overlap top, bottom, left or right edge, before thumbnail, or after thumbnail. |
 | Icon size | 14 | Icon size in pixels (8–32). |
 | Maximum icons per workspace | 4 | Extra apps collapse into a `+N` badge (1–10). |
-| Wrap scrolling | On | Scrolling past the last workspace wraps to the first, and vice versa. |
-| Hide empty workspaces | Off | Hide workspaces with no windows, unless focused or visible. |
+| Wrap scrolling | On | Scrolling past the last thumbnail wraps to the first workspace. Scrolling back past the first wraps to the last workspace, skipping the placeholder. |
+| Hide empty workspaces | Off | Hide workspaces with no windows, unless focused or visible. Wheel scrolling skips hidden workspaces. |
 | Show workspaces from all monitors | On | When off, only workspaces on this bar's monitor are shown. |
 | Exclude reserved zones | On | Hide bars, docks and other edge panels from thumbnails, so only the usable workspace area is shown. |
-| Add placeholder after last workspace | Off | Show a `+` thumbnail after the last workspace. Clicking it switches to a new workspace with the next id. Only shown when the last workspace has windows. |
+| Add placeholder after last workspace | Off | Show a `+` thumbnail after the last workspace. Clicking it, or scrolling onto it, switches to a new workspace with the next id. Only shown when the last workspace has windows. |
 | Show special workspaces | Off | Show special (scratchpad) workspaces after the placeholder, or after the last workspace if there is no placeholder. Clicking one toggles it shown or hidden. Wheel scrolling skips them. |
 | Square highlight | Off | Draw the focus and visible-workspace outline as a sharp rectangle instead of rounded corners. |
 | Show wallpaper | On | Draw each monitor's DMS wallpaper behind the windows in its thumbnail. |
@@ -62,7 +62,7 @@ Theme colours are `primary`, `secondary`, `tertiary`, `error` and `outline`, and
 
 Compositor-specific code is isolated behind a single contract:
 
-- `WorkspaceBackend.qml` selects a backend for the running compositor and exposes a common interface: `workspaces` (each with `key`, a `special` flag, `reserved` edge insets and an `urgent` flag), `decorations` (border width, rounding and colours), `focusWorkspace(key)`, and `scroll(step, wrap)`.
+- `WorkspaceBackend.qml` selects a backend for the running compositor and exposes a common interface: `workspaces` (each with `key`, a `special` flag, `reserved` edge insets and an `urgent` flag), `decorations` (border width, rounding and colours), and `focusWorkspace(key)`. Wheel scrolling is handled by the widget, which steps through the thumbnails it shows.
 - `backends/HyprlandBackend.qml` implements that contract for Hyprland.
 - `WorkspaceItem.qml`, `WorkspaceIcons.qml`, and `WorkspaceSwitcherWidget.qml` only use the common contract, so they work unchanged with any backend.
 

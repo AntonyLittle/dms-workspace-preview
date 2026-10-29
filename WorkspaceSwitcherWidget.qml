@@ -280,7 +280,31 @@ PluginComponent {
         if (notches === 0)
             return;
         wheelAccumulator -= notches * 120;
-        backend.scroll(-notches, wrapScroll);
+        scrollWorkspaces(-notches);
+    }
+
+    // Scrolls through the regular thumbnails as shown, including the placeholder. Wrapping
+    // backwards lands on the last real workspace rather than creating a new one.
+    function scrollWorkspaces(step) {
+        const list = visibleWorkspaces.filter(ws => !ws.special);
+        if (list.length === 0)
+            return;
+        const lastReal = list[list.length - 1].placeholder ? list.length - 2 : list.length - 1;
+        let current = list.findIndex(ws => ws.focused);
+        if (current < 0)
+            current = list.findIndex(ws => ws.onVisibleSpace);
+        if (current < 0)
+            current = 0;
+
+        let target = current;
+        for (let i = 0; i < Math.abs(step); i++) {
+            if (step > 0)
+                target = target < list.length - 1 ? target + 1 : (wrapScroll ? 0 : target);
+            else
+                target = target > 0 ? target - 1 : (wrapScroll ? Math.max(0, lastReal) : target);
+        }
+        if (target !== current)
+            backend.focusWorkspace(list[target].key);
     }
 
     horizontalBarPill: Component {

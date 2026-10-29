@@ -110,7 +110,7 @@ PluginSettings {
     ToggleSetting {
         settingKey: "wrapScroll"
         label: I18n.tr("Wrap scrolling")
-        description: I18n.tr("Scrolling past the last workspace continues from the first, and vice versa.")
+        description: I18n.tr("Scrolling past the last thumbnail continues from the first workspace. Scrolling back past the first continues from the last workspace, skipping the placeholder.")
         defaultValue: true
     }
 
@@ -138,7 +138,7 @@ PluginSettings {
     ToggleSetting {
         settingKey: "trailingPlaceholder"
         label: I18n.tr("Add placeholder after last workspace")
-        description: I18n.tr("Show a \"+\" thumbnail after the last workspace that adds a new one. Only shown when the last workspace has windows.")
+        description: I18n.tr("Show a \"+\" thumbnail after the last workspace that adds a new one when clicked or scrolled onto. Only shown when the last workspace has windows.")
         defaultValue: false
     }
 
