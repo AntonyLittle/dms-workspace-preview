@@ -8,7 +8,8 @@ A DankMaterialShell (DMS) bar widget that shows your workspaces as live thumbnai
 - Each monitor's DMS wallpaper is drawn behind the windows, using the same fill mode as DMS. Window borders are approximated from Hyprland's active and inactive border colours and size.
 - Left-click a thumbnail to switch to that workspace.
 - Workspaces with a window that needs attention (urgent) pulse a coloured border until you switch to them.
-- Mouse wheel over the widget steps through workspaces (wheel up = previous, wheel down = next).
+- Mouse wheel over the widget steps through workspaces (wheel up = previous, wheel down = next). Special workspaces are skipped.
+- Optional special (scratchpad) workspaces, shown after the regular ones. Clicking one toggles it: shown when hidden, hidden when shown. Shown specials get a coloured border.
 - Optional app icons per workspace, in four modes:
   - **Off**
   - **Overlap top edge**, **Overlap bottom edge**, **Overlap left edge** or **Overlap right edge**: icons sit centered on that edge, overlapping the thumbnail.
@@ -36,17 +37,19 @@ A DankMaterialShell (DMS) bar widget that shows your workspaces as live thumbnai
 | Show workspaces from all monitors | On | When off, only workspaces on this bar's monitor are shown. |
 | Exclude reserved zones | On | Hide bars, docks and other edge panels from thumbnails, so only the usable workspace area is shown. |
 | Add placeholder after last workspace | Off | Show a `+` thumbnail after the last workspace. Clicking it switches to a new workspace with the next id. Only shown when the last workspace has windows. |
+| Show special workspaces | Off | Show special (scratchpad) workspaces after the placeholder, or after the last workspace if there is no placeholder. Clicking one toggles it shown or hidden. Wheel scrolling skips them. |
 | Square highlight | Off | Draw the focus and visible-workspace outline as a sharp rectangle instead of rounded corners. |
 | Show wallpaper | On | Draw each monitor's DMS wallpaper behind the windows in its thumbnail. |
 | Show window borders | On | Draw an approximation of Hyprland's window borders around each window. |
 | Flash urgent workspaces | On | Pulse a border on unfocused workspaces that have a window needing attention. The border clears when you switch to the workspace. |
 | Urgent border colour | Red (`#ff0000`) | Colour of the flashing urgent border. |
+| Visible special border colour | Gold (`#ffd700`) | Border colour for special workspaces that are currently shown. |
 
 ## Architecture
 
 Compositor-specific code is isolated behind a single contract:
 
-- `WorkspaceBackend.qml` selects a backend for the running compositor and exposes a common interface: `workspaces` (each with `reserved` edge insets and an `urgent` flag), `decorations` (border width, rounding and colours), `focusWorkspace(id)`, and `scroll(step, wrap)`.
+- `WorkspaceBackend.qml` selects a backend for the running compositor and exposes a common interface: `workspaces` (each with `key`, a `special` flag, `reserved` edge insets and an `urgent` flag), `decorations` (border width, rounding and colours), `focusWorkspace(key)`, and `scroll(step, wrap)`.
 - `backends/HyprlandBackend.qml` implements that contract for Hyprland.
 - `WorkspaceItem.qml`, `WorkspaceIcons.qml`, and `WorkspaceSwitcherWidget.qml` only use the common contract, so they work unchanged with any backend.
 

@@ -110,15 +110,32 @@ Item {
         };
     }
 
+    // Special workspaces have no id on Hyprland 0.56+, so they are recognised by name.
+    function isSpecialName(name) {
+        return name === "special" || String(name ?? "").startsWith("special:");
+    }
+
+    function displayName(name) {
+        return String(name ?? "").startsWith("special:") ? name.slice(8) : name;
+    }
+
+    // Argument for togglespecialworkspace: the bare default special is an empty name.
+    function specialToggleName(name) {
+        return name === "special" ? "" : displayName(name);
+    }
+
     readonly property var workspaces: {
         const toplevels = Hyprland.toplevels.values;
         const screens = Quickshell.screens;
         const focusedId = Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : -1;
+        const focusedName = Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.name : "";
         const activeAddress = Hyprland.activeToplevel ? Hyprland.activeToplevel.address : "";
 
-        const result = [];
+        const regular = [];
+        const specials = [];
         for (const ws of Hyprland.workspaces.values) {
-            if (ws.id <= 0)
+            const isSpecial = !(ws.id > 0);
+            if (isSpecial && !isSpecialName(ws.name))
                 continue;
             const mon = ws.monitor;
             const out = logicalOutput(mon);
@@ -127,7 +144,10 @@ Item {
             const windows = [];
             let urgent = false;
             for (const tl of toplevels) {
-                if (!tl.workspace || tl.workspace.id !== ws.id)
+                const onThis = tl.workspace && (isSpecial
+                    ? tl.workspace.name === ws.name
+                    : tl.workspace.id === ws.id);
+                if (!onThis)
                     continue;
                 if (tl.urgent)
                     urgent = true;
@@ -159,9 +179,11 @@ Item {
                         break;
                     }
 
-            result.push({
+            const entry = {
                 id: ws.id,
-                name: ws.name,
+                key: isSpecial ? ws.name : String(ws.id),
+                name: isSpecial ? displayName(ws.name) : ws.name,
+                special: isSpecial,
                 outputName: out ? out.name : "",
                 screen: screen,
                 outputX: out ? out.x : 0,
@@ -169,17 +191,23 @@ Item {
                 outputW: out ? out.w : 16,
                 outputH: out ? out.h : 9,
                 reserved: out ? out.reserved : { left: 0, top: 0, right: 0, bottom: 0 },
-                focused: ws.id === focusedId,
-                onVisibleSpace: ws.id === activeId,
+                focused: isSpecial ? ws.name === focusedName : ws.id === focusedId,
+                onVisibleSpace: isSpecial ? mon?.lastIpcObject?.specialWorkspace?.name === ws.name : ws.id === activeId,
                 urgent: urgent,
                 windows: windows
-            });
+            };
+            (isSpecial ? specials : regular).push(entry);
         }
-        result.sort((a, b) => a.id - b.id);
-        return result;
+        regular.sort((a, b) => a.id - b.id);
+        specials.sort((a, b) => a.key.localeCompare(b.key));
+        return regular.concat(specials);
     }
 
-    function focusWorkspace(id) {
-        HyprlandService.focusWorkspace(id);
+    // Clicking a special toggles it, so it can also be hidden again.
+    function focusWorkspace(key) {
+        if (isSpecialName(key))
+            HyprlandService.toggleSpecial(specialToggleName(key));
+        else
+            HyprlandService.focusWorkspace(key);
     }
 }

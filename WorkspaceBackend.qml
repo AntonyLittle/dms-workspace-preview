@@ -4,9 +4,12 @@ import qs.Services
 // Compositor-agnostic workspace source. Picks a backend for the running compositor.
 //
 // Backend contract (each file in backends/ must provide):
-//   readonly property var workspaces   list of workspace entries, sorted by id:
-//       id            number   compositor workspace id
+//   readonly property var workspaces   list of workspace entries. Regular workspaces come
+//                                      first, sorted by id; special workspaces follow.
+//       id            number   compositor workspace id (null for special workspaces)
+//       key           string   unique, stable identifier used to focus the workspace
 //       name          string   display name
+//       special       bool     workspace is a special (scratchpad-style) workspace
 //       outputName    string   output (monitor) name the workspace lives on
 //       screen        object   Quickshell screen for outputName (may be null)
 //       outputX/outputY/outputW/outputH  output geometry in logical px
@@ -24,7 +27,8 @@ import qs.Services
 //       rounding      number   corner radius
 //       activeColor   string   "#AARRGGBB" border colour for the active window
 //       inactiveColor string   "#AARRGGBB" border colour for other windows
-//   function focusWorkspace(id)   switch to workspace id
+//   function focusWorkspace(key)  activate the workspace with this key; a special is toggled
+//                                 (shown or hidden), a regular workspace is focused
 //   function focusedIndex()       index of the focused workspace in workspaces, or -1
 Item {
     id: root
@@ -38,13 +42,14 @@ Item {
     readonly property var decorations: loader.item ? loader.item.decorations
         : ({ borderWidth: 0, rounding: 0, activeColor: "", inactiveColor: "" })
 
-    function focusWorkspace(id) {
+    function focusWorkspace(key) {
         if (loader.item)
-            loader.item.focusWorkspace(id);
+            loader.item.focusWorkspace(key);
     }
 
+    // Special workspaces are excluded so wheel scrolling only cycles regular workspaces.
     function scroll(step, wrap) {
-        const list = workspaces;
+        const list = workspaces.filter(ws => !ws.special);
         if (list.length === 0)
             return;
         let current = -1;
@@ -62,7 +67,7 @@ Item {
         else
             target = Math.max(0, Math.min(list.length - 1, target));
         if (target !== current)
-            focusWorkspace(list[target].id);
+            focusWorkspace(list[target].key);
     }
 
     Loader {

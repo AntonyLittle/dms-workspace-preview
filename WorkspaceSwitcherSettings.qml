@@ -105,6 +105,13 @@ PluginSettings {
     }
 
     ToggleSetting {
+        settingKey: "showSpecialWorkspaces"
+        label: I18n.tr("Show special workspaces")
+        description: I18n.tr("Show special (scratchpad) workspaces after the regular ones. Clicking one toggles it shown or hidden; wheel scrolling skips them.")
+        defaultValue: false
+    }
+
+    ToggleSetting {
         settingKey: "squareHighlight"
         label: I18n.tr("Square highlight")
         description: I18n.tr("Draw the focus and visible-workspace outline as a sharp rectangle instead of rounded corners.")
@@ -137,5 +144,12 @@ PluginSettings {
         label: I18n.tr("Urgent border colour")
         description: I18n.tr("Colour of the flashing border on workspaces that need attention.")
         defaultValue: "#ff0000"
+    }
+
+    ColorSetting {
+        settingKey: "specialColor"
+        label: I18n.tr("Visible special border colour")
+        description: I18n.tr("Colour of the border on special workspaces that are currently shown.")
+        defaultValue: "#ffd700"
     }
 }
