@@ -24,6 +24,7 @@ Item {
     property bool flashUrgent: true
     property color urgentColor: "#ff0000"
     property color specialColor: "#ffd700"
+    property color focusColor: Theme.primary
     property real urgentPulse: 1
 
     signal activated()
@@ -196,7 +197,7 @@ Item {
             border.width: (root.ws.special && root.ws.onVisibleSpace) ? 2
                 : (root.ws.focused ? 2 : (root.ws.onVisibleSpace ? 1 : 0))
             border.color: (root.ws.special && root.ws.onVisibleSpace) ? root.specialColor
-                : (root.ws.focused ? Theme.primary : Theme.outline)
+                : (root.ws.focused ? root.focusColor : Theme.outline)
         }
 
         // Pulses on unfocused workspaces that have a window asking for attention.

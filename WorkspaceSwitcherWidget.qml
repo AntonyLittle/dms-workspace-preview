@@ -50,8 +50,24 @@ PluginComponent {
     readonly property bool showWallpaper: boolSetting("showWallpaper", true)
     readonly property bool showDecorations: boolSetting("showDecorations", true)
     readonly property bool flashUrgent: boolSetting("flashUrgent", true)
-    readonly property color urgentColor: setting("urgentColor", "#ff0000")
-    readonly property color specialColor: setting("specialColor", "#ffd700")
+    readonly property var themeColors: ({
+        primary: Theme.primary,
+        secondary: Theme.secondary,
+        tertiary: Theme.tertiary,
+        error: Theme.error,
+        outline: Theme.outline
+    })
+
+    // Each colour is either a theme token ("theme") or a custom hex ("custom").
+    function resolveColor(key, defaultSource, defaultToken, defaultHex) {
+        if (setting(key + "Source", defaultSource) === "theme")
+            return themeColors[setting(key + "ThemeColor", defaultToken)] ?? Theme.primary;
+        return setting(key + "Color", defaultHex) || Theme.primary;
+    }
+
+    readonly property color urgentColor: resolveColor("urgent", "custom", "error", "#ff0000")
+    readonly property color specialColor: resolveColor("special", "custom", "tertiary", "#ffd700")
+    readonly property color focusColor: resolveColor("focus", "theme", "primary", "")
     readonly property bool live: surfaceLive !== false
 
     readonly property bool trailingPlaceholder: boolSetting("trailingPlaceholder", false)
@@ -149,6 +165,7 @@ PluginComponent {
                     flashUrgent: root.flashUrgent
                     urgentColor: root.urgentColor
                     specialColor: root.specialColor
+                    focusColor: root.focusColor
                     urgentPulse: root.urgentPulse
                     vertical: false
                     onActivated: backend.focusWorkspace(modelData.key)
@@ -207,6 +224,7 @@ PluginComponent {
                     flashUrgent: root.flashUrgent
                     urgentColor: root.urgentColor
                     specialColor: root.specialColor
+                    focusColor: root.focusColor
                     urgentPulse: root.urgentPulse
                     vertical: true
                     onActivated: backend.focusWorkspace(modelData.key)

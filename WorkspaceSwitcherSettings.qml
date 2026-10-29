@@ -6,6 +6,14 @@ PluginSettings {
     id: root
     pluginId: "workspacePreview"
 
+    readonly property var colourTokenOptions: [
+        { label: I18n.tr("Primary"), value: "primary" },
+        { label: I18n.tr("Secondary"), value: "secondary" },
+        { label: I18n.tr("Tertiary"), value: "tertiary" },
+        { label: I18n.tr("Error"), value: "error" },
+        { label: I18n.tr("Outline"), value: "outline" }
+    ]
+
     SelectionSetting {
         settingKey: "sizeMode"
         label: I18n.tr("Thumbnail sizing")
@@ -139,17 +147,90 @@ PluginSettings {
         defaultValue: true
     }
 
+    SelectionSetting {
+        id: urgentSource
+        settingKey: "urgentSource"
+        label: I18n.tr("Urgent border colour source")
+        description: I18n.tr("Use a theme colour or a custom colour for the flashing urgent border.")
+        defaultValue: "custom"
+        options: [
+            { label: I18n.tr("Theme colour"), value: "theme" },
+            { label: I18n.tr("Custom colour"), value: "custom" }
+        ]
+    }
+
+    SelectionSetting {
+        settingKey: "urgentThemeColor"
+        label: I18n.tr("Urgent border theme colour")
+        description: I18n.tr("Theme colour used for the flashing urgent border.")
+        visible: urgentSource.value === "theme"
+        defaultValue: "error"
+        options: colourTokenOptions
+    }
+
     ColorSetting {
         settingKey: "urgentColor"
         label: I18n.tr("Urgent border colour")
-        description: I18n.tr("Colour of the flashing border on workspaces that need attention.")
+        description: I18n.tr("Custom colour of the flashing border on workspaces that need attention.")
+        visible: urgentSource.value === "custom"
         defaultValue: "#ff0000"
+    }
+
+    SelectionSetting {
+        id: specialSource
+        settingKey: "specialSource"
+        label: I18n.tr("Visible special border colour source")
+        description: I18n.tr("Use a theme colour or a custom colour for the border of shown special workspaces.")
+        defaultValue: "custom"
+        options: [
+            { label: I18n.tr("Theme colour"), value: "theme" },
+            { label: I18n.tr("Custom colour"), value: "custom" }
+        ]
+    }
+
+    SelectionSetting {
+        settingKey: "specialThemeColor"
+        label: I18n.tr("Visible special theme colour")
+        description: I18n.tr("Theme colour of the border on special workspaces that are currently shown.")
+        visible: specialSource.value === "theme"
+        defaultValue: "tertiary"
+        options: colourTokenOptions
     }
 
     ColorSetting {
         settingKey: "specialColor"
         label: I18n.tr("Visible special border colour")
-        description: I18n.tr("Colour of the border on special workspaces that are currently shown.")
+        description: I18n.tr("Custom colour of the border on special workspaces that are currently shown.")
+        visible: specialSource.value === "custom"
         defaultValue: "#ffd700"
+    }
+
+    SelectionSetting {
+        id: focusSource
+        settingKey: "focusSource"
+        label: I18n.tr("Focus border colour source")
+        description: I18n.tr("Use a theme colour or a custom colour for the focused workspace outline.")
+        defaultValue: "theme"
+        options: [
+            { label: I18n.tr("Theme colour"), value: "theme" },
+            { label: I18n.tr("Custom colour"), value: "custom" }
+        ]
+    }
+
+    SelectionSetting {
+        settingKey: "focusThemeColor"
+        label: I18n.tr("Focus border theme colour")
+        description: I18n.tr("Theme colour of the focused workspace outline.")
+        visible: focusSource.value === "theme"
+        defaultValue: "primary"
+        options: colourTokenOptions
+    }
+
+    ColorSetting {
+        settingKey: "focusColor"
+        label: I18n.tr("Focus border colour")
+        description: I18n.tr("Custom colour of the focused workspace outline.")
+        visible: focusSource.value === "custom"
+        defaultValue: Theme.primary
     }
 }

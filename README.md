@@ -42,8 +42,17 @@ A DankMaterialShell (DMS) bar widget that shows your workspaces as live thumbnai
 | Show wallpaper | On | Draw each monitor's DMS wallpaper behind the windows in its thumbnail. |
 | Show window borders | On | Draw an approximation of Hyprland's window borders around each window. |
 | Flash urgent workspaces | On | Pulse a border on unfocused workspaces that have a window needing attention. The border clears when you switch to the workspace. |
-| Urgent border colour | Red (`#ff0000`) | Colour of the flashing urgent border. |
-| Visible special border colour | Gold (`#ffd700`) | Border colour for special workspaces that are currently shown. |
+| Urgent border colour source | Custom colour | Use a theme colour or a custom colour for the flashing urgent border. |
+| Urgent border theme colour | Error | Theme colour used when the source is Theme colour. |
+| Urgent border colour | Red (`#ff0000`) | Custom colour of the flashing urgent border, used when the source is Custom colour. |
+| Visible special border colour source | Custom colour | Use a theme colour or a custom colour for shown special workspaces. |
+| Visible special theme colour | Tertiary | Theme colour used when the source is Theme colour. |
+| Visible special border colour | Gold (`#ffd700`) | Custom colour for special workspaces that are currently shown, used when the source is Custom colour. |
+| Focus border colour source | Theme colour | Use a theme colour or a custom colour for the focused workspace outline. |
+| Focus border theme colour | Primary | Theme colour used when the source is Theme colour. |
+| Focus border colour | Theme primary | Custom colour for the focused workspace outline, used when the source is Custom colour. |
+
+Theme colours are `primary`, `secondary`, `tertiary`, `error` and `outline`, and follow the DMS theme as it changes.
 
 ## Architecture
 
