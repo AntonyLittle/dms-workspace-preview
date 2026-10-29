@@ -49,6 +49,7 @@ A DankMaterialShell (DMS) bar widget that shows your workspaces as live thumbnai
 | Square highlight | Off | Draw the focus and visible-workspace outline as a sharp rectangle instead of rounded corners. |
 | Show wallpaper | On | Draw each monitor's DMS wallpaper behind the windows in its thumbnail. |
 | Show window borders | On | Draw an approximation of Hyprland's window borders around each window. |
+| Thumbnail shadow | Off | Off, subtle, medium or strong drop shadow under each thumbnail and the popout preview. Thumbnails are spaced slightly further apart, and a shadow lifts while hovered or magnified. Colour, intensity and light direction follow the DMS shadow (elevation) settings, and shadows are hidden when DMS shadows are turned off. |
 | Flash urgent workspaces | On | Pulse a border on unfocused workspaces that have a window needing attention. The border clears when you switch to the workspace. |
 | Urgent border colour source | Custom colour | Use a theme colour or a custom colour for the flashing urgent border. |
 | Urgent border theme colour | Error | Theme colour used when the source is Theme colour. |

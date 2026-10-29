@@ -41,8 +41,18 @@ Item {
         const distance = Math.abs(pointer - (startOf(item) + length / 2));
         if (distance >= reach)
             return 1;
-        const peak = Math.max(1, widget.hoverSize / item.thumbH);
+        const peak = peakFor(item);
         return 1 + (peak - 1) * strength * (0.5 + 0.5 * Math.cos(Math.PI * distance / reach));
+    }
+
+    function peakFor(item) {
+        return Math.max(1, widget.hoverSize / item.thumbH);
+    }
+
+    // How far a thumbnail is towards its peak magnification (0-1), used to lift its shadow.
+    function liftFor(item, magnification) {
+        const peak = peakFor(item);
+        return peak > 1 ? (magnification - 1) / (peak - 1) : 0;
     }
 
     // Extra length added by magnification between the start of the strip and pos.
@@ -80,7 +90,7 @@ Item {
         id: layout
         rows: strip.vertical ? 0 : 1
         columns: strip.vertical ? 1 : 0
-        spacing: Theme.spacingXS
+        spacing: strip.widget.shadowLevel > 0 ? Theme.spacingS : Theme.spacingXS
 
         Repeater {
             model: strip.model
@@ -153,6 +163,11 @@ Item {
                         specialColor: strip.widget.specialColor
                         focusColor: strip.widget.focusColor
                         urgentPulse: strip.widget.urgentPulse
+                        shadowLevel: strip.widget.shadowLevel
+                        shadowDirection: strip.widget.shadowDirectionFor(strip.anchorEdge)
+                        liftOnHover: strip.widget.hoverMode !== "magnify"
+                        lift: strip.widget.hoverMode === "magnify" && thumbH > 0
+                            ? strip.liftFor(entry, entry.magnification) : 0
                         onHoverChanged: (hovered, globalPosition, baseThumbHeight) =>
                             strip.widget.updateWorkspaceHover(entry.modelData, hovered, globalPosition, baseThumbHeight)
                         onActivated: strip.widget.activateWorkspace(entry.modelData)

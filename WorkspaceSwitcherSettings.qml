@@ -204,6 +204,19 @@ PluginSettings {
         defaultValue: true
     }
 
+    SelectionSetting {
+        settingKey: "thumbnailShadow"
+        label: I18n.tr("Thumbnail shadow")
+        description: I18n.tr("Drop shadow under each thumbnail and the popout preview. It lifts on hover or magnification. Colour, intensity and direction follow the DMS shadow settings, and shadows are hidden when DMS shadows are off.")
+        defaultValue: "off"
+        options: [
+            { label: I18n.tr("Off"), value: "off" },
+            { label: I18n.tr("Subtle"), value: "subtle" },
+            { label: I18n.tr("Medium"), value: "medium" },
+            { label: I18n.tr("Strong"), value: "strong" }
+        ]
+    }
+
     ToggleSetting {
         settingKey: "flashUrgent"
         label: I18n.tr("Flash urgent workspaces")

@@ -54,6 +54,14 @@ PluginComponent {
     readonly property bool squareHighlight: boolSetting("squareHighlight", false)
     readonly property bool showWallpaper: boolSetting("showWallpaper", true)
     readonly property bool showDecorations: boolSetting("showDecorations", true)
+    // 0 = off, otherwise the DMS elevation level (1 subtle, 2 medium, 3 strong).
+    readonly property int shadowLevel: ({ subtle: 1, medium: 2, strong: 3 })[setting("thumbnailShadow", "off")] ?? 0
+    readonly property string barEdge: axis ? axis.edge : "top"
+
+    // DMS's "auto (bar)" light direction means light comes from the bar's own edge.
+    function shadowDirectionFor(edge) {
+        return Theme.elevationLightDirection === "autoBar" ? edge : Theme.elevationLightDirection;
+    }
     readonly property bool flashUrgent: boolSetting("flashUrgent", true)
     readonly property var themeColors: ({
         primary: Theme.primary,
@@ -191,6 +199,17 @@ PluginComponent {
                         : popout.localY - height - root.hoveredBaseThumbHeight / 2 - popout.gap)
                 x: screen ? popout.clamp(desiredX, screen.width - width) : 0
                 y: screen ? popout.clamp(desiredY, screen.height - height) : 0
+
+                Loader {
+                    anchors.fill: parent
+                    active: root.shadowLevel > 0
+                    sourceComponent: ElevationShadow {
+                        level: Theme.elevationLevel3
+                        direction: root.shadowDirectionFor(root.barEdge)
+                        targetColor: "transparent"
+                        targetRadius: Theme.cornerRadius + popout.padding
+                    }
+                }
 
                 Rectangle {
                     anchors.fill: parent

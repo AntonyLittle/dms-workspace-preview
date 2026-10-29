@@ -28,7 +28,35 @@ Item {
     property color specialColor: "#ffd700"
     property color focusColor: Theme.primary
     property real urgentPulse: 1
+    // 0 = no shadow, otherwise a DMS elevation level (1-3).
+    property int shadowLevel: 0
+    property string shadowDirection: "top"
+    // Raises the shadow towards the next level (0-1). Set by magnification; hover adds its own.
+    property real lift: 0
+    property bool liftOnHover: true
 
+    property real hoverLift: liftOnHover && frameMouse.containsMouse ? 1 : 0
+    Behavior on hoverLift {
+        NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+    }
+
+    function elevationLevel(n) {
+        return [null, Theme.elevationLevel1, Theme.elevationLevel2, Theme.elevationLevel3, Theme.elevationLevel4][n];
+    }
+
+    readonly property var shadowParams: {
+        const base = elevationLevel(Math.max(1, Math.min(3, shadowLevel)));
+        const next = elevationLevel(Math.max(1, Math.min(4, shadowLevel + 1)));
+        const t = Math.max(0, Math.min(1, Math.max(lift, hoverLift)));
+        const mix = key => (base[key] ?? 0) + ((next[key] ?? 0) - (base[key] ?? 0)) * t;
+        return {
+            blurPx: mix("blurPx"),
+            offsetX: mix("offsetX"),
+            offsetY: mix("offsetY"),
+            spreadPx: mix("spreadPx"),
+            alpha: mix("alpha")
+        };
+    }
     signal activated()
     signal hoverChanged(bool hovered, point globalPosition, int baseThumbHeight)
 
@@ -102,6 +130,21 @@ Item {
 
     implicitWidth: thumbW + leadX + trailX
     implicitHeight: thumbH + leadY + trailY
+
+    // Drawn outside the frame only, so it never darkens the semi-transparent thumbnail.
+    Loader {
+        x: frame.x
+        y: frame.y
+        width: frame.width
+        height: frame.height
+        active: root.shadowLevel > 0
+        sourceComponent: ElevationShadow {
+            level: root.shadowParams
+            direction: root.shadowDirection
+            targetColor: "transparent"
+            targetRadius: frame.radius
+        }
+    }
 
     Rectangle {
         id: frame
@@ -261,13 +304,21 @@ Item {
         }
 
         MouseArea {
+            id: frameMouse
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton
-            hoverEnabled: root.hoverEnabled
+            // Hover is also tracked for the shadow lift; only popout mode reports it upward.
+            hoverEnabled: root.hoverEnabled || (root.liftOnHover && root.shadowLevel > 0)
             cursorShape: Qt.PointingHandCursor
             onClicked: root.activated()
-            onEntered: root.hoverChanged(true, frame.mapToGlobal(frame.width / 2, frame.height / 2), root.thumbH)
-            onExited: root.hoverChanged(false, Qt.point(0, 0), root.thumbH)
+            onEntered: {
+                if (root.hoverEnabled)
+                    root.hoverChanged(true, frame.mapToGlobal(frame.width / 2, frame.height / 2), root.thumbH);
+            }
+            onExited: {
+                if (root.hoverEnabled)
+                    root.hoverChanged(false, Qt.point(0, 0), root.thumbH);
+            }
         }
     }
 
