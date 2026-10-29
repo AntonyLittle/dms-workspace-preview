@@ -153,8 +153,10 @@ Item {
                     urgent = true;
                 if (!tl.wayland)
                     continue;
+                // Early window events can carry partial IPC data. Skipping them avoids a
+                // TypeError that would abort the whole snapshot and leave stale thumbnails.
                 const ipc = tl.lastIpcObject;
-                if (!ipc)
+                if (!ipc?.at || !ipc?.size)
                     continue;
                 windows.push({
                     address: ipc.address ?? "",

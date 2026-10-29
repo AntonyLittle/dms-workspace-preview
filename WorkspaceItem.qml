@@ -156,7 +156,9 @@ Item {
                 delegate: Item {
                     id: windowTile
                     required property var modelData
-                    x: (windowTile.modelData.x - root.insets.left) * root.scaleFactor
+                    property bool hasFrame: false
+                    property bool captureActive: true
+
                     y: (windowTile.modelData.y - root.insets.top) * root.scaleFactor
                     width: windowTile.modelData.w * root.scaleFactor
                     height: windowTile.modelData.h * root.scaleFactor
@@ -172,10 +174,43 @@ Item {
                         color: (windowTile.modelData.active ? root.decorations.activeColor : root.decorations.inactiveColor) || "transparent"
                     }
 
-                    ScreencopyView {
+                    // Shown until a frame arrives, or when a capture has stopped and is being retried.
+                    Rectangle {
                         anchors.fill: parent
-                        captureSource: windowTile.modelData.wayland
-                        live: root.live
+                        visible: !windowTile.hasFrame
+                        color: Theme.withAlpha(Theme.surfaceText, 0.08)
+
+                        Text {
+                            anchors.centerIn: parent
+                            width: parent.width - 4
+                            horizontalAlignment: Text.AlignHCenter
+                            elide: Text.ElideRight
+                            text: windowTile.modelData.appId
+                            font.pixelSize: Math.max(6, Math.min(12, parent.height * 0.4))
+                            color: Theme.outline
+                            visible: text !== "" && parent.width > 24
+                        }
+                    }
+
+                    // A stopped capture is recreated after a short pause, rather than left empty.
+                    Loader {
+                        anchors.fill: parent
+                        active: windowTile.captureActive
+                        sourceComponent: ScreencopyView {
+                            captureSource: windowTile.modelData.wayland
+                            live: root.live
+                            onHasContentChanged: windowTile.hasFrame = hasContent
+                            onStopped: {
+                                windowTile.hasFrame = false;
+                                windowTile.captureActive = false;
+                            }
+                        }
+                    }
+
+                    Timer {
+                        interval: 1000
+                        running: !windowTile.captureActive
+                        onTriggered: windowTile.captureActive = true
                     }
                 }
             }
