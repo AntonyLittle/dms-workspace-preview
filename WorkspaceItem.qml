@@ -12,7 +12,7 @@ Item {
     property bool fitContainer: false
     property real containerSize: 0
     property bool live: true
-    property string iconMode: "anchored"
+    property string iconMode: "bottom"
     property int iconSize: 14
     property int maxIcons: 4
     property bool vertical: false
@@ -34,12 +34,13 @@ Item {
     readonly property real aspect: (ws.outputW > 0 && ws.outputH > 0) ? usableW / usableH : 16 / 9
 
     // Fit mode: containerSize is the cross-axis space the pill offers. Horizontal bars constrain
-    // height, so anchored icons (which overhang the top/bottom edge) reserve half their size.
-    // Vertical bars constrain width, and anchored icons overhang only vertically, so no reserve.
-    readonly property real fitOverhang: (!vertical && iconMode === "anchored" && showIcons) ? iconSize / 2 : 0
+    // height, so top/bottom icons (which overhang that edge) reserve half their size. Vertical bars
+    // constrain width, so left/right icons reserve half their size on the width instead.
+    readonly property real fitOverhang: (!vertical && (iconMode === "top" || iconMode === "bottom")) ? iconSize / 2 : 0
+    readonly property real sideOverhang: (vertical && (iconMode === "left" || iconMode === "right")) ? iconSize / 2 : 0
     readonly property int thumbH: fitContainer
         ? Math.max(1, Math.floor(vertical
-            ? containerSize / aspect
+            ? (containerSize - sideOverhang) / aspect
             : containerSize - fitOverhang))
         : thumbHeight
     readonly property int thumbW: Math.max(1, Math.round(thumbH * aspect))
@@ -70,22 +71,29 @@ Item {
 
     readonly property bool iconsInline: iconMode === "before" || iconMode === "after"
     readonly property bool iconsColumn: iconsInline && !vertical
-    readonly property bool iconsRow: iconMode === "anchored" || (iconsInline && vertical)
+    readonly property bool iconsRow: iconMode === "top" || iconMode === "bottom" || (iconsInline && vertical)
     readonly property bool showIcons: iconMode !== "off" && appIds.length > 0
 
     readonly property int lengthAvailable: iconsRow ? thumbW : thumbH
-    readonly property int iconCap: Math.max(1, Math.min(maxIcons, Math.floor((lengthAvailable + iconSize / 2) / (iconSize + 1))))
+    // Icons and the 1px gaps between them must fit inside the thumbnail's length (WorkspaceIcons spacing).
+    readonly property int iconCap: Math.max(1, Math.min(maxIcons, Math.floor((lengthAvailable + 1) / (iconSize + 1))))
     readonly property int shownCount: appIds.length > iconCap ? iconCap - 1 : appIds.length
     readonly property var shownIds: appIds.slice(0, shownCount)
     readonly property int overflowCount: appIds.length - shownCount
 
-    readonly property real leadX: (iconMode === "before" && iconsColumn && showIcons) ? iconSize + gap : 0
-    readonly property real leadY: (iconMode === "before" && iconsRow && iconsInline && showIcons) ? iconSize + gap : 0
-    readonly property real trailY: (iconMode === "after" && iconsRow && iconsInline && showIcons) ? iconSize + gap : 0
-    readonly property real anchoredOverhang: (iconMode === "anchored" && showIcons) ? iconSize / 2 : 0
+    // Edge-overlapping icons reserve half their size on that side so they can straddle the edge.
+    // The reserve depends only on the mode, so empty workspaces (such as the placeholder) line up with occupied ones.
+    readonly property real leadX: (iconMode === "before" && iconsColumn && showIcons) ? iconSize + gap
+        : (iconMode === "left" ? iconSize / 2 : 0)
+    readonly property real leadY: (iconMode === "before" && iconsRow && iconsInline && showIcons) ? iconSize + gap
+        : (iconMode === "top" ? iconSize / 2 : 0)
+    readonly property real trailX: (iconMode === "after" && iconsColumn && showIcons) ? iconSize + gap
+        : (iconMode === "right" ? iconSize / 2 : 0)
+    readonly property real trailY: (iconMode === "after" && iconsRow && iconsInline && showIcons) ? iconSize + gap
+        : (iconMode === "bottom" ? iconSize / 2 : 0)
 
-    implicitWidth: thumbW + leadX + (iconsColumn && iconMode === "after" && showIcons ? iconSize + gap : 0)
-    implicitHeight: thumbH + leadY + trailY + anchoredOverhang
+    implicitWidth: thumbW + leadX + trailX
+    implicitHeight: thumbH + leadY + trailY
 
     Rectangle {
         id: frame
@@ -203,10 +211,16 @@ Item {
         x: {
             if (root.iconsRow)
                 return root.leadX + (root.thumbW - width) / 2;
+            if (root.iconMode === "left")
+                return root.leadX - root.iconSize / 2;
+            if (root.iconMode === "right")
+                return root.leadX + root.thumbW - root.iconSize / 2;
             return root.iconMode === "before" ? 0 : root.leadX + root.thumbW + root.gap;
         }
         y: {
-            if (root.iconsRow && root.iconMode === "anchored")
+            if (root.iconMode === "top")
+                return root.leadY - root.iconSize / 2;
+            if (root.iconMode === "bottom")
                 return root.leadY + root.thumbH - root.iconSize / 2;
             if (root.iconsRow)
                 return root.iconMode === "before" ? 0 : root.leadY + root.thumbH + root.gap;

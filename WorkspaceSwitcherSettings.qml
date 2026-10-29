@@ -39,10 +39,13 @@ PluginSettings {
         settingKey: "iconMode"
         label: I18n.tr("App icons")
         description: I18n.tr("Where app icons appear relative to each thumbnail.")
-        defaultValue: "anchored"
+        defaultValue: "bottom"
         options: [
             { label: I18n.tr("Off"), value: "off" },
-            { label: I18n.tr("Overlap thumbnail edge"), value: "anchored" },
+            { label: I18n.tr("Overlap top edge"), value: "top" },
+            { label: I18n.tr("Overlap bottom edge"), value: "bottom" },
+            { label: I18n.tr("Overlap left edge"), value: "left" },
+            { label: I18n.tr("Overlap right edge"), value: "right" },
             { label: I18n.tr("Before thumbnail"), value: "before" },
             { label: I18n.tr("After thumbnail"), value: "after" }
         ]

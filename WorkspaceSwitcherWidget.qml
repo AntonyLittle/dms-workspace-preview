@@ -38,7 +38,8 @@ PluginComponent {
     readonly property int fillPercent: intSetting("fillPercent", 100, 50, 100)
     readonly property real contentThickness: Math.max(0, widgetThickness - 2 * (barConfig?.widgetPadding ?? 8) * (widgetThickness / 30))
     readonly property real fitContainerSize: contentThickness * fillPercent / 100
-    readonly property string iconMode: setting("iconMode", "anchored")
+    // "anchored" was the bottom-edge option before the edges were split out; keep saved values working.
+    readonly property string iconMode: setting("iconMode", "bottom") === "anchored" ? "bottom" : setting("iconMode", "bottom")
     readonly property int iconSize: intSetting("iconSize", 14, 8, 32)
     readonly property int maxIcons: intSetting("maxIcons", 4, 1, 10)
     readonly property bool wrapScroll: boolSetting("wrapScroll", true)
