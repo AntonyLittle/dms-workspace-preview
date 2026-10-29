@@ -159,9 +159,10 @@ Item {
                 delegate: Item {
                     id: windowTile
                     required property var modelData
-                    property bool hasFrame: false
-                    property bool captureActive: true
+                    readonly property bool hasFrame: captureLoader.item?.hasContent ?? false
+                    property int retries: 0
 
+                    x: (windowTile.modelData.x - root.insets.left) * root.scaleFactor
                     y: (windowTile.modelData.y - root.insets.top) * root.scaleFactor
                     width: windowTile.modelData.w * root.scaleFactor
                     height: windowTile.modelData.h * root.scaleFactor
@@ -177,7 +178,7 @@ Item {
                         color: (windowTile.modelData.active ? root.decorations.activeColor : root.decorations.inactiveColor) || "transparent"
                     }
 
-                    // Shown until a frame arrives, or when a capture has stopped and is being retried.
+                    // Shown whenever the capture has no frame, including while it is being restarted.
                     Rectangle {
                         anchors.fill: parent
                         visible: !windowTile.hasFrame
@@ -195,25 +196,35 @@ Item {
                         }
                     }
 
-                    // A stopped capture is recreated after a short pause, rather than left empty.
                     Loader {
+                        id: captureLoader
                         anchors.fill: parent
-                        active: windowTile.captureActive && root.capturesEnabled
+                        active: root.capturesEnabled
                         sourceComponent: ScreencopyView {
                             captureSource: windowTile.modelData.wayland
                             live: root.live
-                            onHasContentChanged: windowTile.hasFrame = hasContent
-                            onStopped: {
-                                windowTile.hasFrame = false;
-                                windowTile.captureActive = false;
+                            onHasContentChanged: {
+                                if (hasContent)
+                                    windowTile.retries = 0;
                             }
                         }
                     }
 
+                    // When Hyprland fails a capture (for example mid-resize), Quickshell drops the
+                    // capture without emitting stopped, leaving the view empty for good. Only a new
+                    // capture source starts a new capture, so cycle it while there is no frame.
                     Timer {
-                        interval: 1000
-                        running: !windowTile.captureActive
-                        onTriggered: windowTile.captureActive = true
+                        interval: Math.min(5000, 500 * Math.pow(2, windowTile.retries))
+                        running: captureLoader.item !== null && !windowTile.hasFrame
+                        repeat: true
+                        onTriggered: {
+                            const view = captureLoader.item;
+                            if (!view)
+                                return;
+                            windowTile.retries++;
+                            view.captureSource = null;
+                            view.captureSource = Qt.binding(() => windowTile.modelData.wayland);
+                        }
                     }
                 }
             }

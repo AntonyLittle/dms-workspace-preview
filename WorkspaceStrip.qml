@@ -110,6 +110,7 @@ Item {
                 ws: modelData
                 vertical: strip.vertical
                 hoverEnabled: strip.widget.hoverMode === "popout"
+                capturesEnabled: strip.vertical === strip.widget.isVertical
                 thumbHeight: strip.widget.thumbnailHeight
                 fitContainer: strip.widget.fitContainer
                 containerSize: strip.widget.fitContainerSize
