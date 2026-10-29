@@ -212,4 +212,11 @@ Item {
         else
             HyprlandService.focusWorkspace(key);
     }
+
+    // Hyprland creates a missing workspace on the focused monitor, so focus the target one first.
+    function createWorkspace(id, outputName) {
+        if (outputName && Hyprland.focusedMonitor?.name !== outputName)
+            HyprlandService.focusMonitor(outputName);
+        HyprlandService.focusWorkspace(id);
+    }
 }

@@ -85,52 +85,79 @@ Item {
         Repeater {
             model: strip.model
 
-            delegate: WorkspaceItem {
-                id: item
+            // Wraps either a workspace thumbnail or a group separator. Separators report no
+            // thumbH, so magnification shifts them along with their neighbours but never scales them.
+            delegate: Item {
+                id: entry
                 required property var modelData
+                readonly property bool isSeparator: !!modelData.separator
+                readonly property var thumbH: isSeparator ? undefined : loader.item?.thumbH
 
-                readonly property real magnification: strip.scaleFor(item)
+                readonly property real magnification: isSeparator ? 1 : strip.scaleFor(entry)
                 readonly property real shift: strip.strength > 0
-                    ? strip.extraBefore(strip.startOf(item)) - strip.pointerExtra : 0
+                    ? strip.extraBefore(strip.startOf(entry)) - strip.pointerExtra : 0
 
+                implicitWidth: loader.implicitWidth
+                implicitHeight: loader.implicitHeight
+                width: implicitWidth
+                height: implicitHeight
                 z: magnification
+                opacity: strip.widget.isDimmed(modelData) ? 0.45 : 1
                 transform: [
                     Scale {
-                        origin.x: strip.vertical && strip.anchorEdge === "right" ? item.width : 0
-                        origin.y: !strip.vertical && strip.anchorEdge === "bottom" ? item.height : 0
-                        xScale: item.magnification
-                        yScale: item.magnification
+                        origin.x: strip.vertical && strip.anchorEdge === "right" ? entry.width : 0
+                        origin.y: !strip.vertical && strip.anchorEdge === "bottom" ? entry.height : 0
+                        xScale: entry.magnification
+                        yScale: entry.magnification
                     },
                     Translate {
-                        x: strip.vertical ? 0 : item.shift
-                        y: strip.vertical ? item.shift : 0
+                        x: strip.vertical ? 0 : entry.shift
+                        y: strip.vertical ? entry.shift : 0
                     }
                 ]
 
-                ws: modelData
-                vertical: strip.vertical
-                hoverEnabled: strip.widget.hoverMode === "popout"
-                capturesEnabled: strip.vertical === strip.widget.isVertical
-                thumbHeight: strip.widget.thumbnailHeight
-                fitContainer: strip.widget.fitContainer
-                containerSize: strip.widget.fitContainerSize
-                live: strip.widget.live
-                iconMode: strip.widget.iconMode
-                iconSize: strip.widget.iconSize
-                maxIcons: strip.widget.maxIcons
-                excludeReserved: strip.widget.excludeReservedZones
-                squareHighlight: strip.widget.squareHighlight
-                showWallpaper: strip.widget.showWallpaper
-                showDecorations: strip.widget.showDecorations
-                decorations: strip.workspaceBackend.decorations
-                flashUrgent: strip.widget.flashUrgent
-                urgentColor: strip.widget.urgentColor
-                specialColor: strip.widget.specialColor
-                focusColor: strip.widget.focusColor
-                urgentPulse: strip.widget.urgentPulse
-                onHoverChanged: (hovered, globalPosition, baseThumbHeight) =>
-                    strip.widget.updateWorkspaceHover(modelData, hovered, globalPosition, baseThumbHeight)
-                onActivated: strip.workspaceBackend.focusWorkspace(modelData.key)
+                Loader {
+                    id: loader
+                    sourceComponent: entry.isSeparator ? separatorComponent : workspaceComponent
+                }
+
+                Component {
+                    id: separatorComponent
+                    WorkspaceSeparator {
+                        vertical: strip.vertical
+                        crossSize: strip.vertical ? layout.width : layout.height
+                    }
+                }
+
+                Component {
+                    id: workspaceComponent
+                    WorkspaceItem {
+                        ws: entry.modelData
+                        vertical: strip.vertical
+                        hoverEnabled: strip.widget.hoverMode === "popout"
+                        capturesEnabled: strip.vertical === strip.widget.isVertical
+                        thumbHeight: strip.widget.thumbnailHeight
+                        fitContainer: strip.widget.fitContainer
+                        containerSize: strip.widget.fitContainerSize
+                        live: strip.widget.live
+                        iconMode: strip.widget.iconMode
+                        iconSize: strip.widget.iconSize
+                        maxIcons: strip.widget.maxIcons
+                        excludeReserved: strip.widget.excludeReservedZones
+                        squareHighlight: strip.widget.squareHighlight
+                        showWallpaper: strip.widget.showWallpaper
+                        showDecorations: strip.widget.showDecorations
+                        decorations: strip.workspaceBackend.decorations
+                        flashUrgent: strip.widget.flashUrgent
+                        urgentColor: strip.widget.urgentColor
+                        specialColor: strip.widget.specialColor
+                        focusColor: strip.widget.focusColor
+                        urgentPulse: strip.widget.urgentPulse
+                        onHoverChanged: (hovered, globalPosition, baseThumbHeight) =>
+                            strip.widget.updateWorkspaceHover(entry.modelData, hovered, globalPosition, baseThumbHeight)
+                        onActivated: strip.widget.activateWorkspace(entry.modelData)
+                    }
+                }
             }
         }
 

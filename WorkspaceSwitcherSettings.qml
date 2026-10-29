@@ -122,10 +122,44 @@ PluginSettings {
     }
 
     ToggleSetting {
+        id: showAllMonitors
         settingKey: "showAllMonitors"
         label: I18n.tr("Show workspaces from all monitors")
         description: I18n.tr("When off, only workspaces on the monitor this bar is on are shown.")
         defaultValue: true
+    }
+
+    ToggleSetting {
+        id: groupByOutput
+        settingKey: "groupByOutput"
+        label: I18n.tr("Group workspaces by monitor")
+        description: I18n.tr("Show each monitor's workspaces together in physical order, with a separator between groups. Each group gets its own placeholder, and special workspaces form a final group.")
+        visible: showAllMonitors.value
+        defaultValue: false
+    }
+
+    ToggleSetting {
+        settingKey: "thisOutputFirst"
+        label: I18n.tr("This monitor's group first")
+        description: I18n.tr("Put the group for the monitor this bar is on at the start.")
+        visible: showAllMonitors.value && groupByOutput.value
+        defaultValue: false
+    }
+
+    ToggleSetting {
+        settingKey: "dimOtherOutputs"
+        label: I18n.tr("Dim other monitors' workspaces")
+        description: I18n.tr("Fade workspaces that are on a different monitor from this bar.")
+        visible: showAllMonitors.value
+        defaultValue: false
+    }
+
+    ToggleSetting {
+        settingKey: "scrollThisOutput"
+        label: I18n.tr("Scroll only this monitor's workspaces")
+        description: I18n.tr("Wheel scrolling only moves between workspaces on the monitor this bar is on.")
+        visible: showAllMonitors.value
+        defaultValue: false
     }
 
     ToggleSetting {

@@ -29,6 +29,8 @@ import qs.Services
 //       inactiveColor string   "#AARRGGBB" border colour for other windows
 //   function focusWorkspace(key)  activate the workspace with this key; a special is toggled
 //                                 (shown or hidden), a regular workspace is focused
+//   function createWorkspace(id, outputName)  switch to a new regular workspace with this id,
+//                                 created on outputName ("" means the focused output)
 //   function focusedIndex()       index of the focused workspace in workspaces, or -1
 Item {
     id: root
@@ -45,6 +47,11 @@ Item {
     function focusWorkspace(key) {
         if (loader.item)
             loader.item.focusWorkspace(key);
+    }
+
+    function createWorkspace(id, outputName) {
+        if (loader.item)
+            loader.item.createWorkspace(id, outputName);
     }
 
     Loader {

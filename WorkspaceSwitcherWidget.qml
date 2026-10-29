@@ -82,6 +82,10 @@ PluginComponent {
 
     readonly property bool trailingPlaceholder: boolSetting("trailingPlaceholder", false)
     readonly property bool showSpecialWorkspaces: boolSetting("showSpecialWorkspaces", false)
+    readonly property bool groupByOutput: boolSetting("groupByOutput", false)
+    readonly property bool thisOutputFirst: boolSetting("thisOutputFirst", false)
+    readonly property bool dimOtherOutputs: boolSetting("dimOtherOutputs", false)
+    readonly property bool scrollThisOutput: boolSetting("scrollThisOutput", false)
 
     function updateWorkspaceHover(ws, entered, globalPosition, baseThumbHeight) {
         if (hoverMode === "none")
@@ -235,24 +239,82 @@ PluginComponent {
 
     // Offers a new workspace after the last one, but only when that last one is in use.
     // It copies the last workspace's output geometry so it sizes like its neighbours.
-    // Special workspaces are listed after the placeholder, or after the last regular workspace.
-    readonly property var visibleWorkspaces: {
-        const list = realWorkspaces;
+    // targetOutput is the monitor the new workspace is created on ("" means the focused one).
+    // The id is the next free one across all monitors, so it never lands on an existing workspace.
+    function withPlaceholder(list, targetOutput) {
         if (!trailingPlaceholder || list.length === 0 || list[list.length - 1].windows.length === 0)
-            return list.concat(specialWorkspaces);
+            return list;
         const last = list[list.length - 1];
         const placeholder = Object.assign({}, last, {
-            key: String(last.id + 1),
-            id: last.id + 1,
-            name: String(last.id + 1),
+            key: groupedByOutput ? "new:" + targetOutput : String(nextWorkspaceId),
+            id: nextWorkspaceId,
+            name: String(nextWorkspaceId),
             special: false,
             windows: [],
             focused: false,
             onVisibleSpace: false,
             urgent: false,
-            placeholder: true
+            placeholder: true,
+            targetOutput: targetOutput
         });
-        return list.concat([placeholder], specialWorkspaces);
+        return list.concat([placeholder]);
+    }
+
+    readonly property int nextWorkspaceId: {
+        let max = 0;
+        for (const ws of backend.allWorkspaces)
+            if (!ws.special && ws.id > max)
+                max = ws.id;
+        return max + 1;
+    }
+
+    readonly property string barOutput: parentScreen ? parentScreen.name : ""
+    readonly property bool groupedByOutput: groupByOutput && showAllMonitors
+
+    // Ungrouped: regular workspaces by id, then the placeholder, then specials.
+    // Grouped: one group per monitor in physical order (this bar's monitor first if chosen),
+    // each with its own placeholder, then specials as a final group. Separators sit between groups.
+    readonly property var visibleWorkspaces: {
+        if (!groupedByOutput)
+            return withPlaceholder(realWorkspaces, showAllMonitors ? "" : barOutput).concat(specialWorkspaces);
+
+        const groups = {};
+        const outputs = [];
+        for (const ws of realWorkspaces) {
+            if (!groups[ws.outputName]) {
+                groups[ws.outputName] = [];
+                outputs.push(ws.outputName);
+            }
+            groups[ws.outputName].push(ws);
+        }
+        outputs.sort((a, b) => {
+            if (thisOutputFirst && (a === barOutput) !== (b === barOutput))
+                return a === barOutput ? -1 : 1;
+            const wa = groups[a][0];
+            const wb = groups[b][0];
+            return (wa.outputX - wb.outputX) || (wa.outputY - wb.outputY) || a.localeCompare(b);
+        });
+
+        let result = [];
+        for (const output of outputs) {
+            if (result.length > 0)
+                result.push({ key: "sep:" + output, separator: true });
+            result = result.concat(withPlaceholder(groups[output], output));
+        }
+        if (specialWorkspaces.length > 0 && result.length > 0)
+            result.push({ key: "sep:special", separator: true });
+        return result.concat(specialWorkspaces);
+    }
+
+    function activateWorkspace(ws) {
+        if (ws.placeholder)
+            backend.createWorkspace(ws.id, ws.targetOutput ?? "");
+        else
+            backend.focusWorkspace(ws.key);
+    }
+
+    function isDimmed(ws) {
+        return dimOtherOutputs && showAllMonitors && barOutput !== "" && !ws.separator && ws.outputName !== barOutput;
     }
 
     readonly property bool anyUrgent: flashUrgent && visibleWorkspaces.some(ws => ws.urgent && !ws.focused)
@@ -283,14 +345,21 @@ PluginComponent {
         scrollWorkspaces(-notches);
     }
 
-    // Scrolls through the regular thumbnails as shown, including the placeholder. Wrapping
-    // backwards lands on the last real workspace rather than creating a new one.
+    // Scrolls through the regular thumbnails as shown, including placeholders, optionally only
+    // those on this bar's monitor. Wrapping backwards lands on the last real workspace rather
+    // than creating a new one.
     function scrollWorkspaces(step) {
-        const list = visibleWorkspaces.filter(ws => !ws.special);
+        const onlyThisOutput = scrollThisOutput && showAllMonitors && barOutput !== "";
+        const list = visibleWorkspaces.filter(ws => !ws.special && !ws.separator
+            && (!onlyThisOutput || ws.outputName === barOutput));
         if (list.length === 0)
             return;
-        const lastReal = list[list.length - 1].placeholder ? list.length - 2 : list.length - 1;
+        let lastReal = list.length - 1;
+        while (lastReal > 0 && list[lastReal].placeholder)
+            lastReal--;
         let current = list.findIndex(ws => ws.focused);
+        if (current < 0)
+            current = list.findIndex(ws => ws.onVisibleSpace && ws.outputName === barOutput);
         if (current < 0)
             current = list.findIndex(ws => ws.onVisibleSpace);
         if (current < 0)
@@ -301,10 +370,10 @@ PluginComponent {
             if (step > 0)
                 target = target < list.length - 1 ? target + 1 : (wrapScroll ? 0 : target);
             else
-                target = target > 0 ? target - 1 : (wrapScroll ? Math.max(0, lastReal) : target);
+                target = target > 0 ? target - 1 : (wrapScroll ? lastReal : target);
         }
         if (target !== current)
-            backend.focusWorkspace(list[target].key);
+            activateWorkspace(list[target]);
     }
 
     horizontalBarPill: Component {
