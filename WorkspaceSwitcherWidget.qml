@@ -49,6 +49,8 @@ PluginComponent {
     readonly property bool squareHighlight: boolSetting("squareHighlight", false)
     readonly property bool showWallpaper: boolSetting("showWallpaper", true)
     readonly property bool showDecorations: boolSetting("showDecorations", true)
+    readonly property bool flashUrgent: boolSetting("flashUrgent", true)
+    readonly property color urgentColor: setting("urgentColor", "#ff0000")
     readonly property bool live: surfaceLive !== false
 
     readonly property bool trailingPlaceholder: boolSetting("trailingPlaceholder", false)
@@ -72,9 +74,22 @@ PluginComponent {
             windows: [],
             focused: false,
             onVisibleSpace: false,
+            urgent: false,
             placeholder: true
         });
         return list.concat([placeholder]);
+    }
+
+    readonly property bool anyUrgent: flashUrgent && visibleWorkspaces.some(ws => ws.urgent && !ws.focused)
+
+    // One shared pulse drives every urgent thumbnail so they flash in step. It only runs while needed.
+    property real urgentPulse: 1
+
+    SequentialAnimation {
+        running: root.anyUrgent
+        loops: Animation.Infinite
+        NumberAnimation { target: root; property: "urgentPulse"; to: 0.2; duration: 600; easing.type: Easing.InOutSine }
+        NumberAnimation { target: root; property: "urgentPulse"; to: 1; duration: 600; easing.type: Easing.InOutSine }
     }
 
     // Wheel: up = previous workspace, down = next. Accumulates one notch (120 units) per step.
@@ -120,6 +135,9 @@ PluginComponent {
                     showWallpaper: root.showWallpaper
                     showDecorations: root.showDecorations
                     decorations: backend.decorations
+                    flashUrgent: root.flashUrgent
+                    urgentColor: root.urgentColor
+                    urgentPulse: root.urgentPulse
                     vertical: false
                     onActivated: backend.focusWorkspace(modelData.id)
                 }
@@ -174,6 +192,9 @@ PluginComponent {
                     showWallpaper: root.showWallpaper
                     showDecorations: root.showDecorations
                     decorations: backend.decorations
+                    flashUrgent: root.flashUrgent
+                    urgentColor: root.urgentColor
+                    urgentPulse: root.urgentPulse
                     vertical: true
                     onActivated: backend.focusWorkspace(modelData.id)
                 }

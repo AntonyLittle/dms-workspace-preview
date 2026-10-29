@@ -21,6 +21,9 @@ Item {
     property bool showWallpaper: true
     property bool showDecorations: true
     property var decorations: ({ borderWidth: 0, rounding: 0, activeColor: "", inactiveColor: "" })
+    property bool flashUrgent: true
+    property color urgentColor: "#ff0000"
+    property real urgentPulse: 1
 
     signal activated()
 
@@ -190,6 +193,17 @@ Item {
             color: "transparent"
             border.width: root.ws.focused ? 2 : (root.ws.onVisibleSpace ? 1 : 0)
             border.color: root.ws.focused ? Theme.primary : Theme.outline
+        }
+
+        // Pulses on unfocused workspaces that have a window asking for attention.
+        Rectangle {
+            anchors.fill: parent
+            visible: root.flashUrgent && !root.ws.placeholder && root.ws.urgent && !root.ws.focused
+            radius: root.squareHighlight ? 0 : parent.radius
+            color: "transparent"
+            border.width: 2
+            border.color: root.urgentColor
+            opacity: root.urgentPulse
         }
 
         MouseArea {

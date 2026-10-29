@@ -124,4 +124,18 @@ PluginSettings {
         description: I18n.tr("Draw an approximation of Hyprland's window borders around each window in its thumbnail.")
         defaultValue: true
     }
+
+    ToggleSetting {
+        settingKey: "flashUrgent"
+        label: I18n.tr("Flash urgent workspaces")
+        description: I18n.tr("Pulse a border on workspaces with a window that needs attention, until you switch to that workspace.")
+        defaultValue: true
+    }
+
+    ColorSetting {
+        settingKey: "urgentColor"
+        label: I18n.tr("Urgent border colour")
+        description: I18n.tr("Colour of the flashing border on workspaces that need attention.")
+        defaultValue: "#ff0000"
+    }
 }

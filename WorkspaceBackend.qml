@@ -14,6 +14,7 @@ import qs.Services
 //                     claimed by exclusive layer surfaces (bars, docks)
 //       focused       bool     workspace is the globally focused one
 //       onVisibleSpace bool    workspace is the active one on its output
+//       urgent        bool     a window on the workspace is requesting attention
 //       windows       list of { address, wayland, appId, x, y, w, h, floating, active }
 //                     address is a stable compositor id for the window
 //                     x/y are relative to the output origin, logical px

@@ -125,8 +125,13 @@ Item {
             const activeId = mon?.activeWorkspace ? mon.activeWorkspace.id : -1;
 
             const windows = [];
+            let urgent = false;
             for (const tl of toplevels) {
-                if (!tl.workspace || tl.workspace.id !== ws.id || !tl.wayland)
+                if (!tl.workspace || tl.workspace.id !== ws.id)
+                    continue;
+                if (tl.urgent)
+                    urgent = true;
+                if (!tl.wayland)
                     continue;
                 const ipc = tl.lastIpcObject;
                 if (!ipc)
@@ -166,6 +171,7 @@ Item {
                 reserved: out ? out.reserved : { left: 0, top: 0, right: 0, bottom: 0 },
                 focused: ws.id === focusedId,
                 onVisibleSpace: ws.id === activeId,
+                urgent: urgent,
                 windows: windows
             });
         }
