@@ -1,4 +1,6 @@
 import QtQuick
+import Quickshell
+import Quickshell.Wayland
 import qs.Common
 
 // The row (horizontal bar) or column (vertical bar) of workspace thumbnails.
@@ -17,6 +19,55 @@ Item {
 
     property real pointer: -1
     property real strength: 0
+    property point screenOrigin: Qt.point(0, 0)
+    readonly property bool magnifyEnabled: widget.hoverMode === "magnify" && widget.live
+        && vertical === widget.isVertical && visible && widget.parentScreen !== null
+    readonly property bool overlayActive: magnifyEnabled && (baseHover.hovered || strength > 0)
+
+    function updateScreenOrigin() {
+        const center = widget.hoverScreenPosition(strip);
+        screenOrigin = Qt.point(center.x - width / 2, center.y - height / 2);
+    }
+
+    function updatePointer(position) {
+        pointer = vertical ? position.y - screenOrigin.y : position.x - screenOrigin.x;
+    }
+
+    function updateHover() {
+        if (magnifyEnabled && (baseHover.hovered || overlayHover.hovered)) {
+            hoverExit.stop();
+            strength = 1;
+        } else {
+            hoverExit.restart();
+        }
+    }
+
+    onMagnifyEnabledChanged: {
+        if (!magnifyEnabled) {
+            hoverExit.stop();
+            strength = 0;
+            pointer = -1;
+        }
+    }
+
+    onOverlayActiveChanged: {
+        if (overlayActive)
+            updateScreenOrigin();
+    }
+
+    Timer {
+        id: hoverExit
+        interval: 80
+        onTriggered: {
+            if (!baseHover.hovered && !overlayHover.hovered)
+                strip.strength = 0;
+        }
+    }
+
+    FrameAnimation {
+        running: strip.overlayActive
+        onTriggered: strip.updateScreenOrigin()
+    }
 
     Behavior on strength {
         NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
@@ -74,7 +125,8 @@ Item {
     readonly property real pointerExtra: strength > 0 ? extraBefore(pointer) : 0
 
     HoverHandler {
-        enabled: strip.widget.hoverMode === "magnify"
+        id: baseHover
+        enabled: strip.magnifyEnabled
         onPointChanged: {
             if (hovered)
                 strip.pointer = strip.vertical ? point.position.y : point.position.x;
@@ -82,12 +134,74 @@ Item {
         onHoveredChanged: {
             if (hovered)
                 strip.pointer = strip.vertical ? point.position.y : point.position.x;
-            strip.strength = hovered ? 1 : 0;
+            strip.updateHover();
+        }
+    }
+
+    PanelWindow {
+        id: magnifyWindow
+        screen: strip.widget.parentScreen
+        visible: strip.overlayActive
+        color: "transparent"
+        exclusionMode: ExclusionMode.Ignore
+        WlrLayershell.namespace: "dms:plugins:workspacePreview:magnify-" + (screen ? screen.name : "unknown")
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.exclusiveZone: -1
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        anchors {
+            top: true
+            bottom: true
+            left: true
+            right: true
+        }
+        mask: Region {
+            id: magnifyMask
+            item: baseInput
+        }
+
+        Item {
+            id: overlayCanvas
+            anchors.fill: parent
+
+            HoverHandler {
+                id: overlayHover
+                enabled: strip.overlayActive
+                onPointChanged: {
+                    if (hovered)
+                        strip.updatePointer(point.position);
+                }
+                onHoveredChanged: {
+                    if (hovered)
+                        strip.updatePointer(point.position);
+                    strip.updateHover();
+                }
+            }
+
+            Item {
+                id: baseInput
+                x: strip.screenOrigin.x
+                y: strip.screenOrigin.y
+                width: strip.width
+                height: strip.height
+            }
+
+            MouseArea {
+                z: -1
+                anchors.fill: parent
+                acceptedButtons: Qt.NoButton
+                onWheel: event => {
+                    strip.widget.handleWheel(event.angleDelta.y);
+                    event.accepted = true;
+                }
+            }
         }
     }
 
     Grid {
         id: layout
+        parent: strip.overlayActive ? overlayCanvas : strip
+        x: strip.overlayActive ? strip.screenOrigin.x : 0
+        y: strip.overlayActive ? strip.screenOrigin.y : 0
         rows: strip.vertical ? 0 : 1
         columns: strip.vertical ? 1 : 0
         spacing: strip.widget.shadowLevel > 0 ? Theme.spacingS : Theme.spacingXS
@@ -106,6 +220,28 @@ Item {
                 readonly property real magnification: isSeparator ? 1 : strip.scaleFor(entry)
                 readonly property real shift: strip.strength > 0
                     ? strip.extraBefore(strip.startOf(entry)) - strip.pointerExtra : 0
+
+                Region {
+                    id: entryInput
+                    x: Math.floor(strip.screenOrigin.x + entry.x + (strip.vertical
+                        ? (strip.anchorEdge === "right" ? entry.width * (1 - entry.magnification) : 0)
+                        : entry.shift))
+                    y: Math.floor(strip.screenOrigin.y + entry.y + (strip.vertical
+                        ? entry.shift
+                        : (strip.anchorEdge === "bottom" ? entry.height * (1 - entry.magnification) : 0)))
+                    width: entry.isSeparator ? 0 : Math.ceil(entry.width * entry.magnification) + 1
+                    height: entry.isSeparator ? 0 : Math.ceil(entry.height * entry.magnification) + 1
+                }
+
+                Component.onCompleted: magnifyMask.regions.push(entryInput)
+                Component.onDestruction: {
+                    for (let index = 0; index < magnifyMask.regions.length; index++) {
+                        if (magnifyMask.regions[index] === entryInput) {
+                            magnifyMask.regions.splice(index, 1);
+                            break;
+                        }
+                    }
+                }
 
                 implicitWidth: loader.implicitWidth
                 implicitHeight: loader.implicitHeight

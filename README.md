@@ -117,4 +117,4 @@ Compositor-specific code is isolated behind a single contract:
 - Thumbnails rely on Wayland screencopy, captured per window. With "Exclude reserved zones" on, windows and the wallpaper are offset so bars and docks are cropped out. Empty workspaces show their name.
 - Window borders are approximations. Each border is drawn at least one device pixel wide, and drawn corners are square at thumbnail size. Shadows and blur are not drawn. Border colours and sizes are read when the widget loads and when Hyprland reloads its config.
 - The wallpaper is taken from DMS. If another tool changes the wallpaper, the thumbnail follows DMS's setting, not the actual background. "Scrolling" fill mode is drawn as "Fill".
-- Dock magnification scales thumbnails without changing the widget size, so magnified thumbnails can extend past the bar thickness and over neighbouring bar widgets.
+- Dock magnification uses a transparent overlay without changing the widget size, so enlarged thumbnails are not clipped by the bar or dock window. They can overlap neighbouring widgets.
