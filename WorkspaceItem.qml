@@ -58,7 +58,7 @@ Item {
         };
     }
     signal activated()
-    signal hoverChanged(bool hovered, point globalPosition, int baseThumbHeight)
+    signal hoverChanged(bool hovered, Item frame)
 
     // Insets (logical px) hiding bars/docks that reserve screen edges.
     readonly property var insets: (excludeReserved && ws.reserved)
@@ -313,11 +313,11 @@ Item {
             onClicked: root.activated()
             onEntered: {
                 if (root.hoverEnabled)
-                    root.hoverChanged(true, frame.mapToGlobal(frame.width / 2, frame.height / 2), root.thumbH);
+                    root.hoverChanged(true, frame);
             }
             onExited: {
                 if (root.hoverEnabled)
-                    root.hoverChanged(false, Qt.point(0, 0), root.thumbH);
+                    root.hoverChanged(false, frame);
             }
         }
     }

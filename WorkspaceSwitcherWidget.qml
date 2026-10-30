@@ -84,8 +84,8 @@ PluginComponent {
     readonly property bool live: surfaceLive !== false
     property var hoveredWorkspace: null
     property var hoverCandidate: null
-    property point hoveredGlobalPosition: Qt.point(0, 0)
-    property int hoveredBaseThumbHeight: thumbnailHeight
+    property point hoveredScreenPosition: Qt.point(0, 0)
+    property size hoveredFrameSize: Qt.size(0, 0)
     property bool hoverPendingRemoval: false
 
     readonly property bool trailingPlaceholder: boolSetting("trailingPlaceholder", false)
@@ -95,14 +95,24 @@ PluginComponent {
     readonly property bool dimOtherOutputs: boolSetting("dimOtherOutputs", false)
     readonly property bool scrollThisOutput: boolSetting("scrollThisOutput", false)
 
-    function updateWorkspaceHover(ws, entered, globalPosition, baseThumbHeight) {
+    function hoverScreenPosition(frame) {
+        if (typeof root.surfaceContext?.screenPoint === "function") {
+            const point = root.surfaceContext.screenPoint(frame, frame.width / 2, frame.height / 2);
+            if (point)
+                return point;
+        }
+        const point = frame.mapToGlobal(frame.width / 2, frame.height / 2);
+        return Qt.point(point.x - (root.parentScreen?.x ?? 0), point.y - (root.parentScreen?.y ?? 0));
+    }
+
+    function updateWorkspaceHover(ws, entered, frame) {
         if (hoverMode === "none")
             return;
 
         if (entered) {
             hoverCandidate = ws;
-            hoveredGlobalPosition = globalPosition;
-            hoveredBaseThumbHeight = baseThumbHeight;
+            hoveredScreenPosition = hoverScreenPosition(frame);
+            hoveredFrameSize = Qt.size(frame.width, frame.height);
             hoverPendingRemoval = false;
         } else if (hoverCandidate === ws || hoveredWorkspace === ws) {
             if (hoverCandidate === ws)
@@ -155,10 +165,10 @@ PluginComponent {
 
             readonly property real gap: 8
             readonly property real padding: 6
-            readonly property real localX: screen ? root.hoveredGlobalPosition.x - screen.x : 0
-            readonly property real localY: screen ? root.hoveredGlobalPosition.y - screen.y : 0
-            readonly property bool popupBelow: screen ? localY < screen.height - localY : true
-            readonly property bool popupRight: screen ? localX < screen.width - localX : true
+            readonly property real localX: root.hoveredScreenPosition.x
+            readonly property real localY: root.hoveredScreenPosition.y
+            readonly property bool popupBelow: root.barEdge === "top"
+            readonly property bool popupRight: root.barEdge === "left"
 
             function clamp(value, maximum) {
                 return Math.max(0, Math.min(value, Math.max(0, maximum)));
@@ -189,14 +199,14 @@ PluginComponent {
                 height: preview.implicitHeight + popout.padding * 2
                 readonly property real desiredX: popout.vertical
                     ? (popout.popupRight
-                        ? popout.localX + root.hoveredBaseThumbHeight / 2 + popout.gap
-                        : popout.localX - width - root.hoveredBaseThumbHeight / 2 - popout.gap)
+                        ? popout.localX + root.hoveredFrameSize.width / 2 + popout.gap
+                        : popout.localX - width - root.hoveredFrameSize.width / 2 - popout.gap)
                     : popout.localX - width / 2
                 readonly property real desiredY: popout.vertical
                     ? popout.localY - height / 2
                     : (popout.popupBelow
-                        ? popout.localY + root.hoveredBaseThumbHeight / 2 + popout.gap
-                        : popout.localY - height - root.hoveredBaseThumbHeight / 2 - popout.gap)
+                        ? popout.localY + root.hoveredFrameSize.height / 2 + popout.gap
+                        : popout.localY - height - root.hoveredFrameSize.height / 2 - popout.gap)
                 x: screen ? popout.clamp(desiredX, screen.width - width) : 0
                 y: screen ? popout.clamp(desiredY, screen.height - height) : 0
 

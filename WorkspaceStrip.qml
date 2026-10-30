@@ -168,8 +168,8 @@ Item {
                         liftOnHover: strip.widget.hoverMode !== "magnify"
                         lift: strip.widget.hoverMode === "magnify" && thumbH > 0
                             ? strip.liftFor(entry, entry.magnification) : 0
-                        onHoverChanged: (hovered, globalPosition, baseThumbHeight) =>
-                            strip.widget.updateWorkspaceHover(entry.modelData, hovered, globalPosition, baseThumbHeight)
+                        onHoverChanged: (hovered, frame) =>
+                            strip.widget.updateWorkspaceHover(entry.modelData, hovered, frame)
                         onActivated: strip.widget.activateWorkspace(entry.modelData)
                     }
                 }
