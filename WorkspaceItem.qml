@@ -9,6 +9,7 @@ Item {
 
     required property var ws
     property int thumbHeight: 24
+    property real iconSourceScale: 1
     property bool fitContainer: false
     property real containerSize: 0
     property bool hoverEnabled: false
@@ -329,6 +330,7 @@ Item {
         overflow: root.overflowCount
         iconSize: root.iconSize
         rowLayout: root.iconsRow
+        sourceScale: root.iconSourceScale
         onActivated: root.activated()
         x: {
             if (root.iconsRow)

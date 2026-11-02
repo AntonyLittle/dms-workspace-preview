@@ -11,6 +11,7 @@ Item {
     property var appIds: []
     property int overflow: 0
     property int iconSize: 14
+    property real sourceScale: 1
     property bool rowLayout: true
     property real spacing: 1
 
@@ -52,6 +53,7 @@ Item {
                     asynchronous: true
                     smooth: true
                     mipmap: true
+                    backer.sourceSize: Qt.size(root.iconSize * root.sourceScale, root.iconSize * root.sourceScale)
                     source: {
                         const entry = DesktopEntries.heuristicLookup(modelData);
                         return Paths.getAppIcon(modelData, entry);

@@ -97,7 +97,7 @@ Item {
     }
 
     function peakFor(item) {
-        return Math.max(1, widget.hoverSize / item.thumbH);
+        return item.thumbH > 0 ? Math.max(1, widget.hoverSize / item.thumbH) : 1;
     }
 
     // How far a thumbnail is towards its peak magnification (0-1), used to lift its shadow.
@@ -283,6 +283,7 @@ Item {
                         hoverEnabled: strip.widget.hoverMode === "popout"
                         capturesEnabled: strip.vertical === strip.widget.isVertical
                         thumbHeight: strip.widget.thumbnailHeight
+                        iconSourceScale: strip.peakFor(entry)
                         fitContainer: strip.widget.fitContainer
                         containerSize: strip.widget.fitContainerSize
                         live: strip.widget.live

@@ -74,7 +74,7 @@ Settings are grouped into collapsible sections in the plugin's settings page. Se
 
 | Setting | Default | Description |
 |---|---|---|
-| Hover behaviour | None | None, a larger popout preview, or dock-style magnification of thumbnails around the pointer. |
+| Hover behaviour | None | None, a larger popout preview, or dock-style magnification of thumbnails around the pointer. App icons request a high-resolution source for the largest magnified size and scale down at rest. |
 | Hover thumbnail size | 120 | Height in pixels of the popout preview or largest magnified thumbnail (48–400). |
 | Hover delay | 120 | Delay in milliseconds before the popout preview appears or changes (0–500). Magnification follows the pointer immediately. |
 | Wrap scrolling | On | Scrolling past the last thumbnail wraps to the first workspace. Scrolling back past the first wraps to the last workspace, skipping the placeholder. |
